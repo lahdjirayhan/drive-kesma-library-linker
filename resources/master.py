@@ -136,6 +136,10 @@ class MasterDriveHandler:
             except KeyError as error:
                 return
         elif received_text.startswith("/"):
+            # Assure the absensi will only work in private chat with OA.
+            if user_id != group_id:
+                return
+            
             # This block is put here as lazy, 'temporary', solution to catch names or abbreviations of a course name.
             splitlist = received_text.rsplit(" ", 1) # Split from the right
             try:
