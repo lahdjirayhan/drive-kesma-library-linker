@@ -3,8 +3,7 @@ from .games import Hangman
 from .games import Tictactoe
 from .games import DriveLinker
 
-from .absen import absen
-from .absen import matkul_abbreviations
+from .absen import absen_from_line
 
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
@@ -135,33 +134,13 @@ class MasterDriveHandler:
                 self.remove_game(group_id)
             except KeyError as error:
                 return
-        elif received_text.startswith("/"):
+        elif received_text.startswith("!"):
             # Assure the absensi will only work in private chat with OA.
             if user_id != group_id:
                 return
+            # Send unparsed text but without the ! sign
+            received_messenger = absen_from_line(received_text[1:])
             
-            # This block is put here as lazy, 'temporary', solution to catch names or abbreviations of a course name.
-            splitlist = received_text.rsplit(" ", 1) # Split from the right
-            try:
-                matkul = splitlist[0][1:]
-                kode_absen = splitlist[1]
-            except IndexError:
-                self.send_reply(
-                    token,
-                    TextSendMessage("Either missing matkul name or kode absen.")
-                )
-                return
-            
-            try:
-                matkul_proper_name = matkul_abbreviations[matkul]
-            except KeyError as error:
-                self.send_reply(
-                    token,
-                    TextSendMessage("Matkul name is wrong or not recognized!")
-                )
-                return
-            
-            received_messenger = absen(matkul_proper_name, kode_absen)
             # If reply_message results in an error, do push_message
             try:
                 self.send_reply(

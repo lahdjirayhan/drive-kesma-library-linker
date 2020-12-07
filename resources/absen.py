@@ -34,6 +34,10 @@ class NoUnattendedEntryError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__("All other entries have been attended.")
 
+class WrongSpecificationError(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__("A misspecification of matkul and/or absen happened.")
+
 # Custom-defined helpers
 def make_matkul_abbreviation():
   abbrevs = {
@@ -71,25 +75,14 @@ signin_button = '//*[@id="login"]'
 kode_presensi_form = '//*[@id="kode_akses_mhs"]'
 simpan_button = '//*[@id="submit-hadir-mahasiswa"]'
 
-# Main big code
+# Absen engine, "the big code"
 def absen(matkul, kode_presensi, username = os.environ.get("RAYHAN_INTEGRA_USERNAME"), password = os.environ.get("RAYHAN_INTEGRA_PASSWORD")):
     messenger = Messenger()
-    
-    # Input sanity check. Matkul is checked on Master level so here only kode_presensi is checked.
-    # Sanity check also reduces burden on Selenium running.
-    if len(kode_presensi) != 6:
-        messenger.add_reply(TextSendMessage("Kode presensi has wrong length. It should contain exactly 6 digits."))
-        return messenger
-    
-    if not kode_presensi.isnumeric():
-        messenger.add_reply(TextSendMessage("Kode presensi should contain numbers only."))
-        return messenger
     
     # It is saddening that I have to use Chrome. RIP geckodriver + heroku.
     driver = webdriver.Chrome(executable_path = os.environ.get("CHROMEDRIVER_PATH"), options = _op)
     wait = WebDriverWait(driver, 13)
-
-    start = timeit.default_timer()
+    
     try:
         
         try:
@@ -256,7 +249,43 @@ def absen(matkul, kode_presensi, username = os.environ.get("RAYHAN_INTEGRA_USERN
     except:
         pass
     
-    print("Time elapsed in executing request:", timedelta(seconds = timeit.default_timer() - start))
     driver.quit()
     return messenger
-    
+
+# The gateway, sanity checker, wrapper. Moved from Master to reflect
+# what absen is all about: not a class, but rather a function
+# (one call to return the results and that's it).
+def absen_from_line(unparsed_text):
+    # Input sanity check: reduces burden on Selenium running.
+    # Time-reporting, more accurate and "whole" now. Decorator is infeasible
+    # because it stops stack trace on the wrapper.
+    start = timeit.default_timer()
+    messenger = Messenger()
+    try:
+        splitlist = unparsed_text.rstrip().rsplit(" ", 1)
+        try:
+            matkul = splitlist[0]
+            kode_absen = splitlist[1]
+        except IndexError:
+            messenger.add_reply(TextSendMessage("Either missing matkul name or kode absen."))
+            raise WrongSpecificationError
+        
+        try:
+            matkul_proper_name = matkul_abbreviations[matkul]
+        except KeyError as error:
+            messenger.add_reply(TextSendMessage("Matkul name is wrong or not recognized!"))
+            raise WrongSpecificationError
+        
+        if not kode_presensi.isnumeric():
+            messenger.add_reply(TextSendMessage("Kode presensi should contain numbers only."))
+            raise WrongSpecificationError
+        
+        if len(kode_presensi) != 6:
+            messenger.add_reply(TextSendMessage("Kode presensi has wrong length. It should contain exactly 6 digits."))
+            raise WrongSpecificationError
+        
+        messenger.add_replies(absen(matkul_proper_name, kode_absen).reply_array)
+        print("Time elapsed in executing request:", timedelta(seconds = timeit.default_timer() - start))
+    except:
+        pass
+    return messenger
