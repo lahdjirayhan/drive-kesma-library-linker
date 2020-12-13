@@ -24,9 +24,7 @@ class MasterDriveHandler:
     instance does not have control over add_game and remove_game; but they
     DO HAVE control over join and unjoin to make Mastermind's job easier.
     """
-    def __init__(self, line_bot_api, drive):
-        self.bot = line_bot_api
-        self.drive = drive
+    def __init__(self):
         self.games = {}
         self.memberships = {}
         
@@ -36,6 +34,12 @@ class MasterDriveHandler:
         self.keyword_add_game = "/gameon"        # "Give this chat a game."
         self.keyword_remove_game = "/gameoff"    # "Remove game from this chat."
         self.keyword_leave = "/goaway"           # "Leave from this chat/group. (?)"
+    
+    def embed_line_bot_api(self, line_bot_api):
+        self.bot = line_bot_api
+    
+    def embed_drive(self, drive):
+        self.drive = drive
     
     def send_reply(self, token, reply_array):
         """

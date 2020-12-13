@@ -1,12 +1,21 @@
+# Standard imports
 import os
 from decouple import config
 from flask import Flask, request, abort
+from waitress import serve
+
+# LINEBOT imports
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
+
+# Multiprocessing imports
+from multiprocessing.managers import BaseManager
+
+# Custom imports
 from resources import MasterDriveHandler
 from resources.utils import make_drive_instance
-
+    
 # The following lines are mostly not self-written
 # Initiate Flask app instance
 app = Flask(__name__)
@@ -41,22 +50,26 @@ def callback():
 drive = make_drive_instance()
 
 # Initiate mastermind instance
-master = MasterDriveHandler(line_bot_api, drive)
+manager = BaseManager(('', 37844), config("MANAGER_PASSWORD", default = "password").encode())
+manager.register('get_mastermind')
+manager.connect()
+
+def get_master():
+    return manager.get_mastermind()
+
+get_master().embed_line_bot_api(line_bot_api)
+get_master().embed_drive(drive)
 
 @handler.add(MessageEvent, message=TextMessage)
-def handle_text_message(event):
-    # Required to tell Python that the referred variable is in global scope,
-    # not creating and using locally-declared variables.
-    global master
-    
+def handle_text_message(event):    
     token = event.reply_token
     received_text = event.message.text
     user_id = event.source.user_id
     group_id = event.source.group_id if event.source.type == "group" else user_id
     
-    master.query_reply(token, received_text, user_id, group_id)
+    get_master().query_reply(token, received_text, user_id, group_id)
 
 # Main engine, liftoff!
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    serve(app, host = "0.0.0.0", port=port)
