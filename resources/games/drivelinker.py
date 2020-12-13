@@ -11,7 +11,7 @@ from ..utils import Messenger
 
 from linebot.models import TextSendMessage, FlexSendMessage
 
-kesma_library_folder_id = config("KESMA_LIBRARY_FOLDER_ID")
+kesma_library_folder_id = config("KESMA_LIBRARY_FOLDER_ID", default=os.environ.get("KESMA_LIBRARY_FOLDER_ID"))
 class DriveLinker:
     def __init__(self, home_folder = kesma_library_folder_id):
         self.drive = None

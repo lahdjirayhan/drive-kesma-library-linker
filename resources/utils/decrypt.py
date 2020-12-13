@@ -1,10 +1,11 @@
 import os
+from decouple import config
 from cryptography.fernet import Fernet
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
 def initialize_credential_decryption():
-    key = os.environ.get("FERNET_KEY").encode()
+    key = config("FERNET_KEY").encode()
     with open("enc_creds.txt") as f:
         enc_creds = f.read().encode()
     

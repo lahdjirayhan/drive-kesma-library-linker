@@ -4,6 +4,7 @@ from .games import Tictactoe
 from .games import DriveLinker
 
 from .absen import absen_from_line
+from .access_db import access_database_from_line
 
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
@@ -24,9 +25,10 @@ class MasterDriveHandler:
     instance does not have control over add_game and remove_game; but they
     DO HAVE control over join and unjoin to make Mastermind's job easier.
     """
-    def __init__(self, line_bot_api, drive):
+    def __init__(self, line_bot_api, drive, db):
         self.bot = line_bot_api
         self.drive = drive
+        self.db = db
         self.games = {}
         self.memberships = {}
         
@@ -139,7 +141,7 @@ class MasterDriveHandler:
             if user_id != group_id:
                 return
             # Send unparsed text but without the ! sign
-            received_messenger = absen_from_line(received_text[1:])
+            received_messenger = absen_from_line(received_text[1:], db=self.db, user_id=user_id)
             
             # If reply_message results in an error, do push_message
             try:
@@ -154,7 +156,18 @@ class MasterDriveHandler:
                         received_messenger.reply_array
                     )
                     return
-            
+        
+        elif received_text.startswith("*"):
+            # Assure the database access will only work in private chat with OA.
+            if user_id != group_id:
+                return
+            # Send unparsed text but without the * sign
+            received_messenger = access_database_from_line(received_text[1:], db=self.db, user_id=user_id)
+            self.send_reply(
+                token,
+                received_message.reply_array
+            )
+        
         else:
             try:
                 received_messenger = self.games[self.memberships[user_id]].parse_and_reply(received_text, user_id, display_name, group_id)

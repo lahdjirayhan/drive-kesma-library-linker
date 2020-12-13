@@ -1,25 +1,35 @@
+# Flask related imports
 import os
 from decouple import config
 from flask import Flask, request, abort
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+
+
+# Initiate Flask app instance
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = config("DATABASE_URL")
+
+# Initiate database and import database model
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+from resources.models import UserAuth
+
+# Non-Flask related imports
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from resources import MasterDriveHandler
 from resources.utils import make_drive_instance
 
-# The following lines are mostly not self-written
-# Initiate Flask app instance
-app = Flask(__name__)
+
 # Initiate linebotapi instance
-line_bot_api = LineBotApi(
-    config("LINE_CHANNEL_ACCESS_TOKEN",
-           default=os.environ.get('LINE_ACCESS_TOKEN'))
-)
-# Initiate handler instance
-handler = WebhookHandler(
-    config("LINE_CHANNEL_SECRET",
-           default=os.environ.get('LINE_CHANNEL_SECRET'))
-)
+LINE_BOT_ACCESS_TOKEN = config("LINE_CHANNEL_ACCESS_TOKEN", default=os.environ.get('LINE_ACCESS_TOKEN'))
+line_bot_api = LineBotApi(LINE_BOT_ACCESS_TOKEN)
+
+# Initiate webhook handler instance
+LINE_CHANNEL_SECRET = config("LINE_CHANNEL_SECRET", default = os.environ.get('LINE_CHANNEL_SECRET'))
+handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -41,7 +51,7 @@ def callback():
 drive = make_drive_instance()
 
 # Initiate mastermind instance
-master = MasterDriveHandler(line_bot_api, drive)
+master = MasterDriveHandler(line_bot_api, drive, db)
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
