@@ -1,3 +1,4 @@
+import time
 from decouple import config
 from multiprocessing import Lock
 from multiprocessing.managers import BaseManager
@@ -10,6 +11,8 @@ def get_mastermind():
         return master
 
 manager = BaseManager(('', 37844), config("MANAGER_PASSWORD", default = "password").encode())
+print("Manager server declared.")
+
 manager.register('get_mastermind', get_mastermind)
-server = manager.get_server()
-server.serve_forever()
+manager.start()
+print("Manager server started.")

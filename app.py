@@ -3,6 +3,7 @@ import os
 from decouple import config
 from flask import Flask, request, abort
 from waitress import serve
+import time
 
 # LINEBOT imports
 from linebot import LineBotApi, WebhookHandler
@@ -52,13 +53,11 @@ drive = make_drive_instance()
 # Initiate mastermind instance
 manager = BaseManager(('', 37844), config("MANAGER_PASSWORD", default = "password").encode())
 manager.register('get_mastermind')
-manager.connect()
 
 def get_master():
     return manager.get_mastermind()
 
-get_master().embed_line_bot_api(line_bot_api)
-get_master().embed_drive(drive)
+
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):    
@@ -73,3 +72,8 @@ def handle_text_message(event):
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     serve(app, host = "0.0.0.0", port=port)
+    time.sleep(60)
+    manager.connect()
+    print("Manager connected successfully.")
+    get_master().embed_line_bot_api(line_bot_api)
+    get_master().embed_drive(drive)
