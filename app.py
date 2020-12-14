@@ -10,16 +10,16 @@ from flask_migrate import Migrate
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = config("DATABASE_URL")
 
-# Initiate database and import database model
-db = SQLAlchemy(app)
+# Import and initiate database
+from resources.models import db
+db.init_app(app)
 migrate = Migrate(app, db)
-from resources.models import UserAuth
 
 # Non-Flask related imports
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from resources import MasterDriveHandler
+from resources.master import MasterDriveHandler
 from resources.utils import make_drive_instance
 
 
