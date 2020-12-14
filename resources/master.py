@@ -141,7 +141,7 @@ class MasterDriveHandler:
             if user_id != group_id:
                 return
             # Send unparsed text but without the ! sign
-            received_messenger = absen_from_line(received_text[1:], db=self.db, user_id=user_id)
+            received_messenger = absen_from_line(received_text[1:], user_id=user_id)
             
             # If reply_message results in an error, do push_message
             try:
@@ -165,7 +165,7 @@ class MasterDriveHandler:
             received_messenger = access_database_from_line(received_text[1:], db=self.db, user_id=user_id)
             self.send_reply(
                 token,
-                received_message.reply_array
+                received_messenger.reply_array
             )
         
         else:

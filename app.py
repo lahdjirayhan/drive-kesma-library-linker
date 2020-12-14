@@ -9,6 +9,7 @@ from flask_migrate import Migrate
 # Initiate Flask app instance
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = config("DATABASE_URL")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Import and initiate database
 from resources.models import db
