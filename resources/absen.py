@@ -246,8 +246,9 @@ def absen(matkul, kode_presensi, username = os.environ.get("RAYHAN_INTEGRA_USERN
             alert_text = "No alerts available."
         print(alert_text)
         messenger.add_reply(TextSendMessage(alert_text))
-    except:
-        pass
+    except Exception as error:
+        print("An exception in absen:")
+        print(error)
     
     driver.quit()
     return messenger
@@ -276,16 +277,20 @@ def absen_from_line(unparsed_text):
             messenger.add_reply(TextSendMessage("Matkul name is wrong or not recognized!"))
             raise WrongSpecificationError
         
-        if not kode_presensi.isnumeric():
+        if not kode_absen.isnumeric():
             messenger.add_reply(TextSendMessage("Kode presensi should contain numbers only."))
             raise WrongSpecificationError
         
-        if len(kode_presensi) != 6:
+        if len(kode_absen) != 6:
             messenger.add_reply(TextSendMessage("Kode presensi has wrong length. It should contain exactly 6 digits."))
             raise WrongSpecificationError
-        
-        messenger.add_replies(absen(matkul_proper_name, kode_absen).reply_array)
-        print("Time elapsed in executing request:", timedelta(seconds = timeit.default_timer() - start))
-    except:
-        pass
+        try:
+            messenger.add_replies(absen(matkul_proper_name, kode_absen).reply_array)
+        except:
+            raise
+    except Exception as error:
+        print("An exception in absen_from_line:")
+        print(error)
+    
+    print("Time elapsed in executing request:", timedelta(seconds = timeit.default_timer() - start))
     return messenger
