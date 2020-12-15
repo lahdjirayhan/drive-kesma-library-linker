@@ -304,7 +304,7 @@ def absen_from_line(unparsed_text, user_id):
         p = Fernet(config("FERNET_KEY").encode()).decrypt(userauth.p.encode()).decode()
         
         try:
-            messenger.add_replies(absen(matkul_proper_name, kode_absen).reply_array)
+            messenger.add_replies(absen(matkul_proper_name, kode_absen, u, p).reply_array)
         except:
             raise
     except Exception as error:
