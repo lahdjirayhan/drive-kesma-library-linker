@@ -20,9 +20,21 @@ migrate = Migrate(app, db)
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from resources.master import MasterDriveHandler
-from resources.utils import make_drive_instance
 
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+from resources.master import MasterDriveHandler
+from resources.utils import initialize_credential_decryption
+
+# Perform decryption on credential files
+initialize_credential_decryption()
+
+# Authorize Google Drive and initiate drive instance
+gauth = GoogleAuth()
+GoogleAuth.DEFAULT_SETTINGS['client_config_file'] = os.path.join(os.path.dirname(__file__), 'client_secrets.json')
+gauth.LoadCredentialsFile("mycreds.txt")
+
+drive = GoogleDrive(gauth)
 
 # Initiate linebotapi instance
 LINE_BOT_ACCESS_TOKEN = config("LINE_CHANNEL_ACCESS_TOKEN", default=os.environ.get('LINE_ACCESS_TOKEN'))
@@ -32,9 +44,11 @@ line_bot_api = LineBotApi(LINE_BOT_ACCESS_TOKEN)
 LINE_CHANNEL_SECRET = config("LINE_CHANNEL_SECRET", default = os.environ.get('LINE_CHANNEL_SECRET'))
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
+
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
+
 
     # get request body as text
     body = request.get_data(as_text=True)
@@ -46,10 +60,8 @@ def callback():
     except InvalidSignatureError:
         abort(400)
 
-    return 'OK'
 
-# Create Drive instance
-drive = make_drive_instance()
+    return 'OK'
 
 # Initiate mastermind instance
 master = MasterDriveHandler(line_bot_api, drive, db)
@@ -66,6 +78,7 @@ def handle_text_message(event):
     group_id = event.source.group_id if event.source.type == "group" else user_id
     
     master.query_reply(token, received_text, user_id, group_id)
+
 
 # Main engine, liftoff!
 if __name__ == "__main__":
