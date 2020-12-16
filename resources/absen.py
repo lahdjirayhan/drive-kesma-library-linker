@@ -1,8 +1,10 @@
 import os
 import time
 import timeit
+from decouple import config
 from babel.dates import format_date, format_time, format_datetime
 from datetime import datetime, timedelta
+from cryptography.fernet import Fernet
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -12,8 +14,9 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from linebot.models import TextSendMessage
 from .utils import Messenger
+from .models import UserAuth
 
-# Custom exceptions:
+# Selenium-related custom exceptions:
 class LoginFailedError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__("Login to presensi ITS failed.")
@@ -37,6 +40,11 @@ class NoUnattendedEntryError(Exception):
 class WrongSpecificationError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__("A misspecification of matkul and/or absen happened.")
+
+# Flask-SQLAlchemy -related custom exception
+class AuthorizationRetrievalError(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__("Something wrong with retrieving the authorization from database.")
 
 # Custom-defined helpers
 def make_matkul_abbreviation():
@@ -76,7 +84,7 @@ kode_presensi_form = '//*[@id="kode_akses_mhs"]'
 simpan_button = '//*[@id="submit-hadir-mahasiswa"]'
 
 # Absen engine, "the big code"
-def absen(matkul, kode_presensi, username = os.environ.get("RAYHAN_INTEGRA_USERNAME"), password = os.environ.get("RAYHAN_INTEGRA_PASSWORD")):
+def absen(matkul, kode_presensi, username, password):
     messenger = Messenger()
     
     # It is saddening that I have to use Chrome. RIP geckodriver + heroku.
@@ -256,7 +264,7 @@ def absen(matkul, kode_presensi, username = os.environ.get("RAYHAN_INTEGRA_USERN
 # The gateway, sanity checker, wrapper. Moved from Master to reflect
 # what absen is all about: not a class, but rather a function
 # (one call to return the results and that's it).
-def absen_from_line(unparsed_text):
+def absen_from_line(unparsed_text, user_id):
     # Input sanity check: reduces burden on Selenium running.
     # Time-reporting, more accurate and "whole" now. Decorator is infeasible
     # because it stops stack trace on the wrapper.
@@ -284,8 +292,19 @@ def absen_from_line(unparsed_text):
         if len(kode_absen) != 6:
             messenger.add_reply(TextSendMessage("Kode presensi has wrong length. It should contain exactly 6 digits."))
             raise WrongSpecificationError
+        
+        # Retrieve account details from database.
+        userauth = UserAuth.query.filter_by(user_id=user_id).first()
+        
+        if userauth is None:
+            messenger.add_reply(TextSendMessage("Unable to retrieve authorization details for this LINE account."))
+            raise AuthorizationRetrievalError
+            
+        u = userauth.u
+        p = Fernet(config("FERNET_KEY").encode()).decrypt(userauth.p.encode()).decode()
+        
         try:
-            messenger.add_replies(absen(matkul_proper_name, kode_absen).reply_array)
+            messenger.add_replies(absen(matkul_proper_name, kode_absen, u, p).reply_array)
         except:
             raise
     except Exception as error:

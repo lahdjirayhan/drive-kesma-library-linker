@@ -15,6 +15,10 @@ humanize = "*"
 selenium = "*"
 babel = "*"
 cryptography = "*"
+flask-script = "*"
+flask-migrate = "*"
+flask-sqlalchemy = "*"
+psycopg2 = "*"
 
 [requires]
 python_version = "3.7"
