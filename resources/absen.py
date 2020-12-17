@@ -83,6 +83,9 @@ signin_button = '//*[@id="login"]'
 kode_presensi_form = '//*[@id="kode_akses_mhs"]'
 simpan_button = '//*[@id="submit-hadir-mahasiswa"]'
 
+
+nse_exception_text = "NoSuchElementException encountered ({code}). Dev-only: refer to source code."
+
 # Absen engine, "the big code"
 def absen(matkul, kode_presensi, username, password):
     messenger = Messenger()
@@ -111,17 +114,17 @@ def absen(matkul, kode_presensi, username, password):
             messenger.add_reply(TextSendMessage("Initial webpage load failed"))
             raise
         except NoSuchElementException:
-            print("NoSuchElementException encountered (0). Dev-only: refer to source code.")
-            messenger.add_reply(TextSendMessage("NoSuchElementException encountered (0). Dev-only: refer to source code."))
+            print(nse_exception_text.format(code=0))
+            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=0)))
             raise
             
         try:
             wait.until(EC.title_contains("Dashboard"))
-            print("Login successful")
-            messenger.add_reply(TextSendMessage("Login successful"))
+            print("Login successful.")
+            messenger.add_reply(TextSendMessage("Login successful."))
         except TimeoutException:
-            print("Login unsuccessful")
-            messenger.add_reply(TextSendMessage("Login unsuccessful"))
+            print("Login unsuccessful.")
+            messenger.add_reply(TextSendMessage("Login unsuccessful."))
             raise LoginFailedError
 
         try:
@@ -132,8 +135,8 @@ def absen(matkul, kode_presensi, username, password):
             messenger.add_reply(TextSendMessage("Fail to get list of courses"))
             raise
         except NoSuchElementException:
-            print("NoSuchElementException encountered (1). Dev-only: refer to source code.")
-            messenger.add_reply(TextSendMessage("NoSuchElementException encountered (1). Dev-only: refer to source code."))
+            print(nse_exception_text.format(code=1))
+            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=1)))
             raise
 
         try:
@@ -154,8 +157,8 @@ def absen(matkul, kode_presensi, username, password):
             messenger.add_reply(TextSendMessage("Course with the name specified not found."))
             raise
         except NoSuchElementExceptionError:
-            print("NoSuchElementException encountered (2). Dev-only: refer to source code.")
-            messenger.add_reply(TextSendMessage("NoSuchElementException encountered (2). Dev-only: refer to source code."))
+            print(nse_exception_text.format(code=2))
+            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=2)))
             raise
 
         try:
@@ -168,8 +171,8 @@ def absen(matkul, kode_presensi, username, password):
             messenger.add_reply(TextSendMessage("Fail to get list of schedules"))
             raise
         except NoSuchElementException:
-            print("NoSuchElementException encountered (3). Dev-only: refer to source code.")
-            messenger.add_reply(TextSendMessage("NoSuchElementException encountered (3). Dev-only: refer to source code."))
+            print(nse_exception_text.format(code=3))
+            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=3)))
             raise
 
         today_date = format_date(datetime.now(), 'EEEE, d MMMM y', locale = "id")
@@ -187,50 +190,56 @@ def absen(matkul, kode_presensi, username, password):
                 if entry.find_element_by_xpath('.//tr/td[2]/p[1]').text == today_date:
                     today_entry = entry
                     already_found = True
-                    print("Matched date!")
-                    schedule_traversing_report += "Matched date!\n"
+                    print("Found entry with today's date.")
+                    schedule_traversing_report += "Found entry with today's date.\nAbsensi will be attempted on that entry.\n"
                     break
                     
             if not already_found:
                 raise ScheduleNotFoundError
         except ScheduleNotFoundError:
-            print("No matching date is found.")
-            schedule_traversing_report += "No matching date is found.\n"
+            print("No entry with today's date is found.")
+            schedule_traversing_report += "No entry with today's date is found.\nFinding alpa in other entries...\n"
             for entry in course_entries:
                 if entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text == "ALPA":
                     today_entry = entry
                     print("Found alpa entry!", entry.find_element_by_xpath('.//tr/td[2]/p[1]').text)
-                    schedule_traversing_report += ('Found alpa entry at' + entry.find_element_by_xpath('.//tr/td[2]/p[1]').text + '!\n')
+                    schedule_traversing_report += ('Found alpa entry at' + entry.find_element_by_xpath('.//tr/td[2]/p[1]').text + '!\n' +
+                                                   'Absensi will be attempted on that entry.\n')
                     break
             
             if today_entry is None:
-                print("No alpa entry is found!")
-                schedule_traversing_report += "No alpa entry is found!\n"
-                raise NoUnattendedEntry
+                print("No alpa entry is found.")
+                schedule_traversing_report += "No alpa entry is found.\n"
+                raise NoUnattendedEntryError
         except NoSuchElementException:
-            print("NoSuchElementException encountered (4). Dev-only: refer to source code.")
-            messenger.add_reply(TextSendMessage("NoSuchElementException encountered (4). Dev-only: refer to source code."))
+            print(nse_exception_text.format(code=4))
+            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=4)))
             raise
         finally:
             messenger.add_reply(TextSendMessage(schedule_traversing_report))
         
         try:
-            if today_entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text != "ALPA":
+            if today_entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text == "HADIR":
                 raise TodayEntryAttendedError
+            elif today_entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text != "ALPA":
+                raise NoUnattendedEntryError
         except NoSuchElementException:
-            print("NoSuchElementException encountered (5). Dev-only: refer to source code.")
-            messenger.add_reply(TextSendMessage("NoSuchElementException encountered (5). Dev-only: refer to source code."))
+            print(nse_exception_text.format(code=5))
+            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=5)))
             raise
         except TodayEntryAttendedError:
             print("Today's entry is already attended.")
             messenger.add_reply(TextSendMessage("Today's entry is already attended."))
             raise
+        except NoUnattendedEntryError:
+            print("Today's entry is neither HADIR nor ALPA.")
+            messenger.add_reply(TextSendMessage("Today's entry is neither HADIR nor ALPA."))
         
         try:
             today_entry.find_element_by_xpath('.//*[contains(@data-target, "#modal-hadir")]').click()
         except NoSuchElementException:
-            print("NoSuchElementException encountered (5b). Dev-only: refer to source code.")
-            messenger.add_reply(TextSendMessage("NoSuchElementException encountered (5b). Dev-only: refer to source code."))
+            print(nse_exception_text.format(code=6))
+            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=6)))
             raise
         
         try:
@@ -243,20 +252,27 @@ def absen(matkul, kode_presensi, username, password):
             messenger.add_reply(TextSendMessage("Fail to get widget box for kode presensi."))
             raise
         except NoSuchElementException:
-            print("NoSuchElementException encountered (6). Dev-only: refer to source code.")
-            messenger.add_reply(TextSendMessage("NoSuchElementException encountered (6). Dev-only: refer to source code."))
+            print(nse_exception_text.format(code=7))
+            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=7)))
             raise
             
-        time.sleep(1) # Wait for classroom to register presensi
+        time.sleep(0.8) # Wait for classroom to register presensi
         try:
             alert_text = driver.find_element_by_xpath('.//div[@role = "alert"]').text
+            
+            # Take only text, not with the x sign that somehow is there with the text.
+            alert_text = alert_text.rsplit('\n', 2)[-1]
         except NoSuchElementException:
             alert_text = "No alerts available."
-        print(alert_text)
-        messenger.add_reply(TextSendMessage(alert_text))
+        finally:            
+            print(alert_text)
+            messenger.add_reply(TextSendMessage(alert_text))
+            
+            # Make absensi status to be sent first rather than last.
+            # Is it good thing?
+            # messenger.reply_array.append(messenger.reply_array.pop(0))
     except Exception as error:
-        print("An exception in absen:")
-        print(error)
+        print("An exception in absen:\n{}".format(error))
     
     driver.quit()
     return messenger
