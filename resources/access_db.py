@@ -16,7 +16,7 @@ def access_database_from_line(unparsed_text, db, user_id):
         u = splitlist[1]
         p = splitlist[2]
     except IndexError as error:
-        messenger.add_reply(TextSendMessage("ERROR_FIELD_INCOMPLETE"))
+        messenger.add_reply(TextSendMessage("Error: missing either NRP or password."))
         return messenger
     
     if keyword == KEYWORD_AUTHORIZE:
@@ -32,8 +32,8 @@ def access_database_from_line(unparsed_text, db, user_id):
                 "NRP: {u}\n"
                 "Pass: {p}\n"
                 "\n"
-                "Delete the chats containing your authentication details"
-                "because it is sensitive information and may be read accidentally"
+                "Delete the chats containing your authentication details "
+                "because it is sensitive information and may be read accidentally "
                 "by another person near you.".format(u=u, p=p)
             ))
         else:
@@ -45,8 +45,8 @@ def access_database_from_line(unparsed_text, db, user_id):
                 "NRP: {u}\n"
                 "Pass: {p}\n"
                 "\n"
-                "Delete the chats containing your authentication details"
-                "because it is sensitive information and may be read accidentally"
+                "Delete the chats containing your authentication details "
+                "because it is sensitive information and may be read accidentally "
                 "by another person near you.".format(u=u, p=p)
             ))
         
@@ -58,9 +58,13 @@ def access_database_from_line(unparsed_text, db, user_id):
             "NRP: {u}\n"
             "Pass: {p}\n"
             "\n"
-            "Delete the chats containing your authentication details"
-            "because it is sensitive information and may be read accidentally"
+            "Delete the chats containing your authentication details "
+            "because it is sensitive information and may be read accidentally "
             "by another person near you.".format(u=u, p=p)
+        ))
+    else:
+        messenger.add_reply(TextSendMessage(
+            "Error: command unknown"
         ))
     
     return messenger
