@@ -1,6 +1,6 @@
 # drive-kesma-library-linker
 
-LINE bot to deliver links of e-books from HIMASTA-ITS Kesma Library straight through chat. Also, a helper to do my attendance for me. Inherently a for-myself project. 
+LINE bot to deliver links of e-books from HIMASTA-ITS Kesma Library straight through chat. Also, a helper to do my attendance (absensi) for me. Inherently a for-myself project.
 
 # Keywords
 
@@ -10,13 +10,13 @@ The bot will not respond to chats unless they include these keywords:
 
 Usage: `*auth USERNAME PASSWORD`
 
-What it does: Saves the provided authorization detail. The authorization is unique and associated with your LINE account.
+What it does: Saves/updates your authorization detail. The bot has to save your authorization detail before you can use it to do absensi. The authorization detail is associated with your LINE account. Please don't use this on device that is not your own because doing so has large consequences.
 
 ## `*deauth`
 
 Usage: `*deauth`
 
-What it does: Removes/forgets the authorization detail previously entered by your LINE account.
+What it does: Removes/forgets the authorization detail previously associated with your LINE account.
 
 ## `!` (key absen identifier)
 
@@ -26,9 +26,8 @@ What it does: Tells the bot to go filling your absensi:
 1. Go to presensi(dot)its(dot)ac(dot)id
 2. Login using authorization detail associated with your LINE account. If login fails/has wrong detail, terminate.
 3. Infer the course that requires absensi:
-    - Determine which course is the MATKUL keyword is pointing to. If found, select that entry.
-    - If no course is selected, declare that MATKUL is not recognized.
-Enter course page (by determining MATKUL keyword is pointing to which course).
+    - Determine which course is the MATKUL keyword is pointing to. If appropriate course is found, select that course. Otherwise, declare MATKUL is not recognized and terminate.
+    - Enter the selected course's page.
 4. Infer the date that requires absensi:
     - Search for an entry that is marked with today's date, starting from latest schedule date to older schedule date. If found, select that entry. Otherwise,
     - Search for an entry that has its status not HADIR, starting from latest schedule date to older schedule date. If found, select that entry. Otherwise,
