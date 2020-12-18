@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from linebot.models import TextSendMessage
 from .utils import Messenger
 from .models import UserAuth
+from .access_db import fetch_credentials, AuthorizationRetrievalError
 
 # Selenium-related custom exceptions:
 class LoginFailedError(Exception):
@@ -40,11 +41,6 @@ class NoUnattendedEntryError(Exception):
 class WrongSpecificationError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__("A misspecification of matkul and/or absen happened.")
-
-# Flask-SQLAlchemy -related custom exception
-class AuthorizationRetrievalError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Something wrong with retrieving the authorization from database.")
 
 # Custom-defined helpers
 def make_matkul_abbreviation():
@@ -310,14 +306,13 @@ def absen_from_line(unparsed_text, user_id):
             raise WrongSpecificationError
         
         # Retrieve account details from database.
-        userauth = UserAuth.query.filter_by(user_id=user_id).first()
-        
-        if userauth is None:
+        try:
+            u, p = fetch_credentials(user_id)
+        except AuthorizationRetrievalError:
             messenger.add_reply(TextSendMessage("Unable to retrieve authorization details for this LINE account."))
-            raise AuthorizationRetrievalError
-            
-        u = userauth.u
-        p = Fernet(config("FERNET_KEY").encode()).decrypt(userauth.p.encode()).decode()
+            raise
+        except:
+            raise
         
         try:
             messenger.add_replies(absen(matkul_proper_name, kode_absen, u, p).reply_array)
