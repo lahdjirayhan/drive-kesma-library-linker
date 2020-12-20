@@ -34,9 +34,13 @@ class TodayEntryAttendedError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__("Today's entry has been attended.")
 
+class TodayEntryNotActionableError(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__("Today's entry is neither HADIR or ALPA.")
+
 class NoUnattendedEntryError(Exception):
     def __init__(self, *args, **kwargs):
-        super().__init__("All other entries have been attended.")
+        super().__init__("All entries are already HADIR.")
 
 class WrongSpecificationError(Exception):
     def __init__(self, *args, **kwargs):
@@ -127,8 +131,8 @@ def absen(matkul, kode_presensi, username, password):
             wait.until(EC.visibility_of_element_located((By.TAG_NAME, 'li')))
             list_of_li = driver.find_elements_by_tag_name('li')
         except TimeoutException:
-            print("Fail to get list of courses")
-            messenger.add_reply(TextSendMessage("Fail to get list of courses"))
+            print("Fail to get list of courses.")
+            messenger.add_reply(TextSendMessage("Fail to get list of courses."))
             raise
         except NoSuchElementException:
             print(nse_exception_text.format(code=1))
@@ -152,7 +156,7 @@ def absen(matkul, kode_presensi, username, password):
             print("Course with the name specified was not found.")
             messenger.add_reply(TextSendMessage("Course with the name specified not found."))
             raise
-        except NoSuchElementExceptionError:
+        except NoSuchElementException:
             print(nse_exception_text.format(code=2))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=2)))
             raise
@@ -162,63 +166,73 @@ def absen(matkul, kode_presensi, username, password):
             time.sleep(0.5)
             table = driver.find_element_by_xpath('//table')
             course_entries = table.find_elements_by_xpath('.//tbody[@class !=""]')
+            course_dates = [entry.find_element_by_xpath('.//tr/td[2]/p[1]').text for entry in course_entries]
+            course_statuses = [entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text for entry in course_entries]
         except TimeoutException:
-            print("Fail to get list of schedules")
-            messenger.add_reply(TextSendMessage("Fail to get list of schedules"))
+            print("Fail to get list of schedules.")
+            messenger.add_reply(TextSendMessage("Fail to get list of schedules."))
             raise
         except NoSuchElementException:
             print(nse_exception_text.format(code=3))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=3)))
             raise
 
-        today_date = format_date(datetime.now(), 'EEEE, d MMMM y', locale = "id")
-        print(today_date)
-        schedule_traversing_report = ""
-        course_entries.reverse()
         try:
-            today_entry = None
-            already_found = False
-            for entry in course_entries:
-                course_entry_string = (entry.find_element_by_xpath('.//tr/td[2]/p[1]').text + " " +
-                                       entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text)
-                print(course_entry_string)
-                schedule_traversing_report += (course_entry_string + '\n')
-                if entry.find_element_by_xpath('.//tr/td[2]/p[1]').text == today_date:
-                    today_entry = entry
-                    already_found = True
-                    print("Found entry with today's date.")
-                    schedule_traversing_report += "Found entry with today's date.\nAbsensi will be attempted on that entry.\n"
-                    break
-                    
-            if not already_found:
+            schedule_not_found = False
+            no_unattended_entry = False
+            selected_entry = None
+            today_date = format_date(datetime.now() + timedelta(hours = 7), 'EEEE, d MMMM y', locale = "id")
+            try:
+                selected_entry = course_entries[course_dates.index(today_date)]
+            except ValueError:
+                # today_date not in course_dates raises ValueError
                 raise ScheduleNotFoundError
         except ScheduleNotFoundError:
-            print("No entry with today's date is found.")
-            schedule_traversing_report += "No entry with today's date is found.\nFinding alpa in other entries...\n"
-            for entry in course_entries:
-                if entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text == "ALPA":
-                    today_entry = entry
-                    print("Found alpa entry!", entry.find_element_by_xpath('.//tr/td[2]/p[1]').text)
-                    schedule_traversing_report += ('Found alpa entry at' + entry.find_element_by_xpath('.//tr/td[2]/p[1]').text + '!\n' +
-                                                   'Absensi will be attempted on that entry.\n')
-                    break
-            
-            if today_entry is None:
-                print("No alpa entry is found.")
-                schedule_traversing_report += "No alpa entry is found.\n"
-                raise NoUnattendedEntryError
-        except NoSuchElementException:
-            print(nse_exception_text.format(code=4))
-            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=4)))
-            raise
+            try:
+                most_recent_alpa_index = len(course_statuses) - course_statuses[::-1].index("ALPA") - 1
+                selected_entry = course_entries[most_recent_alpa_index]
+            except ValueError:
+                # ALPA not in course_statuses raises ValueError
+                no_unattended_entry = True
+            schedule_not_found = True
         finally:
-            messenger.add_reply(TextSendMessage(schedule_traversing_report))
+            schedule_traversing_reports = []
+            try:
+                selected_date = selected_entry.find_element_by_xpath('.//tr/td[2]/p[1]').text
+            except AttributeError:
+                # selected_entry being None will raise AttributeError
+                selected_date = None
+            for i in range(len(course_entries)):
+                schedule_traversing_reports.append(' '.join([course_dates[i], course_statuses[i]]))
+                if course_dates[i] == selected_date:
+                    schedule_traversing_reports[-1] += " [X]"
+            
+            schedule_traversing_report_string = '\n'.join(schedule_traversing_reports)
+            messenger.add_reply(TextSendMessage(schedule_traversing_report_string))
+
+            # SHOULD ADD EXPLANATIONS HERE ABOUT WHAT/HOW WAS CHOSEN
+            if no_unattended_entry:
+                messenger.add_reply(TextSendMessage(
+                    "There is no entry marked as ALPA."
+                ))
+                # Reraise NoUnattendedEntryError as the previous one is lost
+                # This is to exit the large try-except block,
+                # as opposed to using return.
+                raise NoUnattendedEntryError
+            elif schedule_not_found:
+                messenger.add_reply(TextSendMessage(
+                    "There is no entry with today's date, so most recent entry marked as ALPA is selected."
+                ))
+            else:
+                messenger.add_reply(TextSendMessage(
+                    "There is an entry with today's date, so that entry is selected."
+                ))
         
         try:
-            if today_entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text == "HADIR":
+            if selected_entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text == "HADIR":
                 raise TodayEntryAttendedError
-            elif today_entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text != "ALPA":
-                raise NoUnattendedEntryError
+            elif selected_entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text != "ALPA":
+                raise TodayEntryNotActionableError
         except NoSuchElementException:
             print(nse_exception_text.format(code=5))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=5)))
@@ -227,12 +241,13 @@ def absen(matkul, kode_presensi, username, password):
             print("Today's entry is already attended.")
             messenger.add_reply(TextSendMessage("Today's entry is already attended."))
             raise
-        except NoUnattendedEntryError:
+        except TodayEntryNotActionableError:
             print("Today's entry is neither HADIR nor ALPA.")
             messenger.add_reply(TextSendMessage("Today's entry is neither HADIR nor ALPA."))
+            raise
         
         try:
-            today_entry.find_element_by_xpath('.//*[contains(@data-target, "#modal-hadir")]').click()
+            selected_entry.find_element_by_xpath('.//*[contains(@data-target, "#modal-hadir")]').click()
         except NoSuchElementException:
             print(nse_exception_text.format(code=6))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=6)))
@@ -259,7 +274,7 @@ def absen(matkul, kode_presensi, username, password):
             # Take only text, not with the x sign that somehow is there with the text.
             alert_text = alert_text.rsplit('\n', 2)[-1]
         except NoSuchElementException:
-            alert_text = "No alerts available."
+            alert_text = "Tidak ada pemberitahuan berhasil/gagal di webpage."
         finally:            
             print(alert_text)
             messenger.add_reply(TextSendMessage(alert_text))
@@ -319,8 +334,7 @@ def absen_from_line(unparsed_text, user_id):
         except:
             raise
     except Exception as error:
-        print("An exception in absen_from_line:")
-        print(error)
+        print("An exception in absen_from_line:\n{}".format(error))
     
     print("Time elapsed in executing request:", timedelta(seconds = timeit.default_timer() - start))
     return messenger
