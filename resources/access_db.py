@@ -16,7 +16,7 @@ def access_database_from_line(unparsed_text, db, user_id):
         keyword = splitlist[0]
         u = splitlist[1]
         p = splitlist[2]
-    except IndexError as error:
+    except IndexError:
         messenger.add_reply(TextSendMessage("Error: missing either NRP or password."))
         return messenger
     
@@ -41,6 +41,7 @@ def access_database_from_line(unparsed_text, db, user_id):
             ))
         
     elif keyword == KEYWORD_DEAUTHORIZE:
+        # Remove from database
         UserAuth.query.filter_by(user_id=user_id).delete()
         db.session.commit()
         messenger.add_reply(TextSendMessage(

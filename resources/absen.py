@@ -129,9 +129,8 @@ def absen(matkul, kode_presensi, username, password):
                 print(entry.find_element_by_tag_name('a').get_attribute('href'))
                 if matkul in entry.find_element_by_tag_name('a').text:
                     print(matkul, "found!")
-                    already_found = True
                     driver.get(entry.find_element_by_tag_name('a').get_attribute('href'))
-                    break
+                    raise Exception
             raise CourseNotFoundError
         except CourseNotFoundError:
             print("Course with the name specified was not found.")
@@ -141,6 +140,9 @@ def absen(matkul, kode_presensi, username, password):
             print(nse_exception_text.format(code=2))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=2)))
             raise
+        except Exception:
+            # Provided as short-circuit escape block from for loop
+            pass
         
         # RETRIEVE TABLE OF COURSE SCHEDULE ENTRIES
         try:
