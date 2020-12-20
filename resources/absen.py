@@ -4,7 +4,6 @@ import timeit
 from decouple import config
 from babel.dates import format_date, format_time, format_datetime
 from datetime import datetime, timedelta
-from cryptography.fernet import Fernet
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -96,6 +95,7 @@ def absen(matkul, kode_presensi, username, password):
     
     try:
         
+        # INITIAL WEBPAGE LOAD AND LOGIN
         try:
             driver.get(presensi_site)
             wait.until(EC.presence_of_element_located((By.XPATH, username_form)))
@@ -117,7 +117,8 @@ def absen(matkul, kode_presensi, username, password):
             print(nse_exception_text.format(code=0))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=0)))
             raise
-            
+        
+        # VERIFY LOGIN
         try:
             wait.until(EC.title_contains("Dashboard"))
             print("Login successful.")
@@ -126,7 +127,8 @@ def absen(matkul, kode_presensi, username, password):
             print("Login unsuccessful.")
             messenger.add_reply(TextSendMessage("Login unsuccessful."))
             raise LoginFailedError
-
+        
+        # LOCATE LIST OF COURSE NAMES
         try:
             wait.until(EC.visibility_of_element_located((By.TAG_NAME, 'li')))
             list_of_li = driver.find_elements_by_tag_name('li')
@@ -138,9 +140,9 @@ def absen(matkul, kode_presensi, username, password):
             print(nse_exception_text.format(code=1))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=1)))
             raise
-
+        
+        # SELECT INFERRED COURSE
         try:
-            already_found = False
             for entry in list_of_li:
                 print(entry.find_element_by_tag_name('a').text)
                 print(entry.find_element_by_tag_name('a').get_attribute('href'))
@@ -149,9 +151,7 @@ def absen(matkul, kode_presensi, username, password):
                     already_found = True
                     driver.get(entry.find_element_by_tag_name('a').get_attribute('href'))
                     break
-
-            if not already_found:
-                raise CourseNotFoundError
+            raise CourseNotFoundError
         except CourseNotFoundError:
             print("Course with the name specified was not found.")
             messenger.add_reply(TextSendMessage("Course with the name specified not found."))
@@ -160,7 +160,8 @@ def absen(matkul, kode_presensi, username, password):
             print(nse_exception_text.format(code=2))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=2)))
             raise
-
+        
+        # RETRIEVE TABLE OF COURSE SCHEDULE ENTRIES
         try:
             wait.until(EC.presence_of_element_located((By.XPATH, '//table')))
             time.sleep(0.5)
@@ -205,12 +206,12 @@ def absen(matkul, kode_presensi, username, password):
             for i in range(len(course_entries)):
                 schedule_traversing_reports.append(' '.join([course_dates[i], course_statuses[i]]))
                 if course_dates[i] == selected_date:
-                    schedule_traversing_reports[-1] += " [X]"
+                    schedule_traversing_reports[-1] = ' '.join(["[X]", schedule_traversing_reports[-1], "[X]"])
             
             schedule_traversing_report_string = '\n'.join(schedule_traversing_reports)
             messenger.add_reply(TextSendMessage(schedule_traversing_report_string))
 
-            # SHOULD ADD EXPLANATIONS HERE ABOUT WHAT/HOW WAS CHOSEN
+            # EXPLANATION ABOUT WHICH ENTRY IS SELECTED
             if no_unattended_entry:
                 messenger.add_reply(TextSendMessage(
                     "There is no entry marked as ALPA."
@@ -228,11 +229,13 @@ def absen(matkul, kode_presensi, username, password):
                     "There is an entry with today's date, so that entry is selected."
                 ))
         
+        # INFER ACTION ON ENTRY
         try:
             if selected_entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text == "HADIR":
                 raise TodayEntryAttendedError
             elif selected_entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text != "ALPA":
                 raise TodayEntryNotActionableError
+
         except NoSuchElementException:
             print(nse_exception_text.format(code=5))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=5)))
@@ -246,6 +249,7 @@ def absen(matkul, kode_presensi, username, password):
             messenger.add_reply(TextSendMessage("Today's entry is neither HADIR nor ALPA."))
             raise
         
+        # BRING UP PRESENSI WIDGET AND DO ABSENSI
         try:
             selected_entry.find_element_by_xpath('.//*[contains(@data-target, "#modal-hadir")]').click()
         except NoSuchElementException:
@@ -266,7 +270,8 @@ def absen(matkul, kode_presensi, username, password):
             print(nse_exception_text.format(code=7))
             messenger.add_reply(TextSendMessage(nse_exception_text.format(code=7)))
             raise
-            
+        
+        # VERIFY PRESENSI
         time.sleep(0.8) # Wait for classroom to register presensi
         try:
             alert_text = driver.find_element_by_xpath('.//div[@role = "alert"]').text
@@ -324,7 +329,7 @@ def absen_from_line(unparsed_text, user_id):
         try:
             u, p = fetch_credentials(user_id)
         except AuthorizationRetrievalError:
-            messenger.add_reply(TextSendMessage("Unable to retrieve authorization details for this LINE account."))
+            messenger.add_reply(TextSendMessage("Unable to retrieve authorization details associated with this LINE account."))
             raise
         except:
             raise
@@ -333,6 +338,7 @@ def absen_from_line(unparsed_text, user_id):
             messenger.add_replies(absen(matkul_proper_name, kode_absen, u, p).reply_array)
         except:
             raise
+
     except Exception as error:
         print("An exception in absen_from_line:\n{}".format(error))
     
