@@ -14,36 +14,17 @@ from selenium.webdriver.support import expected_conditions as EC
 from linebot.models import TextSendMessage
 from .utils import Messenger
 from .models import UserAuth
-from .access_db import fetch_credentials, AuthorizationRetrievalError
-
-# Selenium-related custom exceptions:
-class LoginFailedError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Login to presensi ITS failed.")
-
-class CourseNotFoundError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Course with name specified was not found.")
-        
-class ScheduleNotFoundError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("No schedule with today's date.")
-
-class TodayEntryAttendedError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Today's entry has been attended.")
-
-class TodayEntryNotActionableError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Today's entry is neither HADIR or ALPA.")
-
-class NoUnattendedEntryError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("All entries are already HADIR.")
-
-class WrongSpecificationError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("A misspecification of matkul and/or absen happened.")
+from .access_db import fetch_credentials
+from .exceptions import (
+    AuthorizationRetrievalError,
+    LoginFailedError,
+    CourseNotFoundError,
+    ScheduleNotFoundError,
+    TodayEntryAttendedError,
+    TodayEntryNotActionableError,
+    NoUnattendedEntryError,
+    WrongSpecificationError
+)
 
 # Custom-defined helpers
 def make_matkul_abbreviation():

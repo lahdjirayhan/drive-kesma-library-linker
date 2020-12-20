@@ -4,11 +4,7 @@ from linebot.models import TextSendMessage
 from .utils import Messenger
 from .utils import encrypt_fernet, decrypt_fernet, derive_key
 from .models import UserAuth
-
-# Flask-SQLAlchemy-related custom exceptions:
-class AuthorizationRetrievalError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Something wrong with retrieving the authorization from database.")
+from .exceptions import AuthorizationRetrievalError
 
 KEYWORD_AUTHORIZE = "auth"
 KEYWORD_DEAUTHORIZE = "deauth"
