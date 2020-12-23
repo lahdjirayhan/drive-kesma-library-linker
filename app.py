@@ -5,9 +5,11 @@ from decouple import config
 # Flask related imports
 from flask import Flask, request, abort
 from flask_migrate import Migrate
+from flask_talisman import Talisman
 
-# Initiate Flask app instance
+# Initiate and configure Flask app instance
 app = Flask(__name__)
+Talisman(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = config("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
