@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, url_for, redirect, request
 from .models import db, UserRegister, UserAuth
 from .access_db import add_userauth, delete_userauth, update_userauth
 
-authorization = Blueprint("authorize", __name__, template_folder="template", static_folder="static")
+authorization = Blueprint("authorize", __name__)
 
 @authorization.route("/authorize", methods = ["GET", "POST"])
 def authorize(*args, **kwargs):
