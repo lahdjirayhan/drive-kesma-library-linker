@@ -1,9 +1,8 @@
-import os
 import time
 import timeit
+from datetime import datetime, timedelta
 from decouple import config
 from babel.dates import format_date, format_time, format_datetime
-from datetime import datetime, timedelta
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -13,7 +12,6 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from linebot.models import TextSendMessage
 from .utils import Messenger
-from .models import UserAuth
 from .access_db import fetch_credentials
 from .exceptions import (
     AuthorizationRetrievalError,
@@ -49,54 +47,54 @@ def make_options():
     op.add_argument("--headless")
     op.add_argument("--disable-dev-shm-usage")
     op.add_argument("--no-sandbox")
-    op.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+    op.binary_location = config("GOOGLE_CHROME_BIN")
     return op
 
 _op = make_options()
 
-presensi_site = 'https://presensi.its.ac.id'
+PRESENSI_SITE = 'https://presensi.its.ac.id'
 
-username_form = '//*[@id="username"]'
-next_button = '//*[@id="continue"]'
-password_form = '//*[@id="password"]'
-signin_button = '//*[@id="login"]'
-kode_presensi_form = '//*[@id="kode_akses_mhs"]'
-simpan_button = '//*[@id="submit-hadir-mahasiswa"]'
+USERNAME_FORM = '//*[@id="username"]'
+NEXT_BUTTON = '//*[@id="continue"]'
+PASSWORD_FORM = '//*[@id="password"]'
+SIGNIN_BUTTON = '//*[@id="login"]'
+KODE_PRESENSI_FORM = '//*[@id="kode_akses_mhs"]'
+SIMPAN_BUTTON = '//*[@id="submit-hadir-mahasiswa"]'
 
 
-nse_exception_text = "NoSuchElementException encountered ({code}). Dev-only: refer to source code."
+NSE_EXCEPTION_TEXT = "NoSuchElementException encountered ({code}). Dev-only: refer to source code."
 
 # Absen engine, "the big code"
 def absen(matkul, kode_presensi, username, password):
     messenger = Messenger()
     
     # It is saddening that I have to use Chrome. RIP geckodriver + heroku.
-    driver = webdriver.Chrome(executable_path = os.environ.get("CHROMEDRIVER_PATH"), options = _op)
+    driver = webdriver.Chrome(executable_path = config("CHROMEDRIVER_PATH"), options = _op)
     wait = WebDriverWait(driver, 13)
     
     try:
         
         # INITIAL WEBPAGE LOAD AND LOGIN
         try:
-            driver.get(presensi_site)
-            wait.until(EC.presence_of_element_located((By.XPATH, username_form)))
+            driver.get(PRESENSI_SITE)
+            wait.until(EC.presence_of_element_located((By.XPATH, USERNAME_FORM)))
             time.sleep(0.5)
-            driver.find_element_by_xpath(username_form).clear()
+            driver.find_element_by_xpath(USERNAME_FORM).clear()
             time.sleep(0.5)
-            driver.find_element_by_xpath(username_form).send_keys(username)
+            driver.find_element_by_xpath(USERNAME_FORM).send_keys(username)
             time.sleep(0.5)
-            driver.find_element_by_xpath(next_button).click()
-            wait.until(EC.visibility_of_element_located((By.XPATH, password_form)))
-            driver.find_element_by_xpath(password_form).send_keys(password)
+            driver.find_element_by_xpath(NEXT_BUTTON).click()
+            wait.until(EC.visibility_of_element_located((By.XPATH, PASSWORD_FORM)))
+            driver.find_element_by_xpath(PASSWORD_FORM).send_keys(password)
             time.sleep(0.5)
-            driver.find_element_by_xpath(signin_button).click()
+            driver.find_element_by_xpath(SIGNIN_BUTTON).click()
         except TimeoutException:
             print("Initial webpage load failed")
             messenger.add_reply(TextSendMessage("Initial webpage load failed"))
             raise
         except NoSuchElementException:
-            print(nse_exception_text.format(code=0))
-            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=0)))
+            print(NSE_EXCEPTION_TEXT.format(code=0))
+            messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=0)))
             raise
         
         # VERIFY LOGIN
@@ -118,8 +116,8 @@ def absen(matkul, kode_presensi, username, password):
             messenger.add_reply(TextSendMessage("Fail to get list of courses."))
             raise
         except NoSuchElementException:
-            print(nse_exception_text.format(code=1))
-            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=1)))
+            print(NSE_EXCEPTION_TEXT.format(code=1))
+            messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=1)))
             raise
         
         # SELECT INFERRED COURSE
@@ -137,8 +135,8 @@ def absen(matkul, kode_presensi, username, password):
             messenger.add_reply(TextSendMessage("Course with the name specified not found."))
             raise
         except NoSuchElementException:
-            print(nse_exception_text.format(code=2))
-            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=2)))
+            print(NSE_EXCEPTION_TEXT.format(code=2))
+            messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=2)))
             raise
         except Exception:
             # Provided as short-circuit escape block from for loop
@@ -157,8 +155,8 @@ def absen(matkul, kode_presensi, username, password):
             messenger.add_reply(TextSendMessage("Fail to get list of schedules."))
             raise
         except NoSuchElementException:
-            print(nse_exception_text.format(code=3))
-            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=3)))
+            print(NSE_EXCEPTION_TEXT.format(code=3))
+            messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=3)))
             raise
 
         try:
@@ -220,8 +218,8 @@ def absen(matkul, kode_presensi, username, password):
                 raise TodayEntryNotActionableError
 
         except NoSuchElementException:
-            print(nse_exception_text.format(code=5))
-            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=5)))
+            print(NSE_EXCEPTION_TEXT.format(code=5))
+            messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=5)))
             raise
         except TodayEntryAttendedError:
             print("Today's entry is already attended.")
@@ -236,22 +234,22 @@ def absen(matkul, kode_presensi, username, password):
         try:
             selected_entry.find_element_by_xpath('.//*[contains(@data-target, "#modal-hadir")]').click()
         except NoSuchElementException:
-            print(nse_exception_text.format(code=6))
-            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=6)))
+            print(NSE_EXCEPTION_TEXT.format(code=6))
+            messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=6)))
             raise
         
         try:
-            wait.until(EC.visibility_of_element_located((By.XPATH, kode_presensi_form)))
-            driver.find_element_by_xpath(kode_presensi_form).send_keys(kode_presensi)
+            wait.until(EC.visibility_of_element_located((By.XPATH, KODE_PRESENSI_FORM)))
+            driver.find_element_by_xpath(KODE_PRESENSI_FORM).send_keys(kode_presensi)
             time.sleep(0.5)
-            driver.find_element_by_xpath(simpan_button).click()
+            driver.find_element_by_xpath(SIMPAN_BUTTON).click()
         except TimeoutException:
             print("Fail to get widget box for kode presensi.")
             messenger.add_reply(TextSendMessage("Fail to get widget box for kode presensi."))
             raise
         except NoSuchElementException:
-            print(nse_exception_text.format(code=7))
-            messenger.add_reply(TextSendMessage(nse_exception_text.format(code=7)))
+            print(NSE_EXCEPTION_TEXT.format(code=7))
+            messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=7)))
             raise
         
         # VERIFY PRESENSI
