@@ -5,25 +5,25 @@
     <link href="https://fonts.googleapis.com/css?family=Ubuntu" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sign in (save credentials)</title>
+
+    <script>
+        function setSecretCode() {
+            var url = new URL(window.location.href);
+            document.getElementById("secret_code").value = url.searchParams.get("secret_code");
+        }
+    </script>
 </head>
 
-<body>
+<body onload="setSecretCode();">
     <div class="main">
         <p class="sign" align="center">Sign in</p>
         <form class="form1" method="POST">
             <input class="un" name="u" type="text" align="center" placeholder="Username">
             <input class="pass" name="p" type="password" align="center" placeholder="Password">
-            <input name="secret_code" type="hidden" value="BASIC_" id="secret_code">
+            <input id="secret_code" name="secret_code" type="hidden" value="{{ m }}">
             <button class="submit" align="center" type="submit">Sign in</button>
         </form>
     </div>
-    <script type="text/javascript">
-        function get_secret_code() {
-            var url = new URL(window.location.href);
-            return url.searchParams.get("secret_code");
-        }
-        document.getElementById('secret_code').value = get_secret_code();
-    </script>
 </body>
 
 </html>

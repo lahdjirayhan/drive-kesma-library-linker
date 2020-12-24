@@ -8,10 +8,11 @@ authorization = Blueprint("authorize", __name__)
 def authorize(*args, **kwargs):
     if request.method == 'GET':
         m = request.args["secret_code"]
+        print(m)
         user_register = UserRegister.query.filter_by(m=m).first()
         if user_register is None:
             return render_template('404.html')
-        return render_template('login.html')
+        return render_template('login.html', m=m)
 
     elif request.method == "POST":
         m = request.form["secret_code"]
