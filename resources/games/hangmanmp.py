@@ -142,7 +142,7 @@ class HangmanMultiplayer:
     
     def continue_game(self, received_text):
         messenger = Messenger()
-        if received_text = self.keyword_continue:
+        if received_text == self.keyword_continue:
             messenger.add_reply(TextSendMessage(
                 "Guess the words by sending single letter; or guess the entire word by prefixing it with /"
             ))
@@ -231,19 +231,19 @@ class HangmanMultiplayer:
     def submit_word(self, received_text, user_id):
         messenger = Messenger()
         
-            if len([char for char in received_text if char.isalpha()]) < 4:
-                messenger.add_reply(TextSendMessage(
-                    "Your word is too short. Minimum 4 letters."
-                ))
-            elif ("/" + received_text.lower()) in self.list_of_keywords:
-                messenger.add_reply(TextSendMessage(
-                    "Your word is not accepted because it is a keyword. Try another word."
-                ))
-            else:
-                HangmanActiveStringMultiplayer.accept_submission(received_text, user_id)
-                messenger.add_reply(TextSendMessage(
-                    "Your word " + received_text + " is accepted!"
-                ))
+        if len([char for char in received_text if char.isalpha()]) < 4:
+            messenger.add_reply(TextSendMessage(
+                "Your word is too short. Minimum 4 letters."
+            ))
+        elif ("/" + received_text.lower()) in self.list_of_keywords:
+            messenger.add_reply(TextSendMessage(
+                "Your word is not accepted because it is a keyword. Try another word."
+            ))
+        else:
+            HangmanActiveStringMultiplayer.accept_submission(received_text, user_id)
+            messenger.add_reply(TextSendMessage(
+                "Your word " + received_text + " is accepted!"
+            ))
                 
         return messenger
         

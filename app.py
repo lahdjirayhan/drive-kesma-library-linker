@@ -1,13 +1,15 @@
-# Flask related imports
+# Base imports
 import os
 from decouple import config
+
+# Flask related imports
 from flask import Flask, request, abort
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_talisman import Talisman
 
-
-# Initiate Flask app instance
+# Initiate and configure Flask app instance
 app = Flask(__name__)
+Talisman(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = config("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -16,10 +18,14 @@ from resources.models import db
 db.init_app(app)
 migrate = Migrate(app, db)
 
+# Register blueprint
+from resources.blueprints import authorization
+app.register_blueprint(authorization)
+
 # Non-Flask related imports
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage
 
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -44,11 +50,9 @@ line_bot_api = LineBotApi(LINE_BOT_ACCESS_TOKEN)
 LINE_CHANNEL_SECRET = config("LINE_CHANNEL_SECRET", default = os.environ.get('LINE_CHANNEL_SECRET'))
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
-
 
     # get request body as text
     body = request.get_data(as_text=True)
@@ -59,7 +63,6 @@ def callback():
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
-
 
     return 'OK'
 

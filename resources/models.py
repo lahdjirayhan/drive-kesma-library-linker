@@ -18,3 +18,16 @@ class UserAuth(db.Model):
     
     def __repr__(self):
         return "<user_id {}>".format(self.user_id)
+
+class UserRegister(db.Model):
+    __tablename__ = "UserRegister"
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True)
+    m = db.Column(db.String())
+    user_id = db.Column(db.String())
+
+    def __init__(self, m, user_id):
+        self.m = m
+        self.user_id = user_id
+    
+    def __repr__(self):
+        return "<user_id {}>".format(self.user_id)
