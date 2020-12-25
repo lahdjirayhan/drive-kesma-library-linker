@@ -13,14 +13,14 @@ KEYWORD_DEAUTHORIZE = "deauth"
 # Helper functions so access_database can be generalized
 def add_userauth(db, user_id, u, p):
     u_enc = encrypt_fernet(u, user_id)
-    p_enc = encrypt_fernet(p, user_id)
+    p_enc = encrypt_fernet(p, user_id[::-1])
     db.session.add(UserAuth(user_id, u_enc, p_enc))
     db.session.commit()
 
 def update_userauth(db, user_id, u, p):
     user_auth = UserAuth.query.filter_by(user_id=user_id).first()
     user_auth.u = encrypt_fernet(u, user_id)
-    user_auth.p = encrypt_fernet(p, user_id)
+    user_auth.p = encrypt_fernet(p, user_id[::-1])
     db.session.commit()
 
 def delete_userauth(db, user_id):
@@ -64,5 +64,5 @@ def fetch_credentials(user_id):
         raise AuthorizationRetrievalError
     
     u = decrypt_fernet(user_auth.u, user_id)
-    p = decrypt_fernet(user_auth.p, user_id)
+    p = decrypt_fernet(user_auth.p, user_id[::-1])
     return u, p
