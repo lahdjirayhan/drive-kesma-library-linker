@@ -50,6 +50,40 @@ The bot fills your presensi by impersonating you, by using the authorization det
 5. Enter the KODE_PRESENSI in the selected entry.
 6. Return the status: successful, failed, or already HADIR; and terminate.
 
+Supported course codes:
+
+1. Teknik Simulasi
+    - `teksim`
+    - `teknik simulasi`
+2. Analisis Data
+    - `ad`
+    - `andat`
+    - `analisis data`
+3. Manajemen Mutu
+    - `mm`
+    - `manmut`
+    - `manajemen mutu`
+4. Statistical Machine Learning
+    - `sml`
+    - `statistical machine learning`
+5. Statistika Ofisial
+    - `ofstat`
+    - `offstat`
+    - `statof`
+    - `statoff`
+    - `statistika ofisial`
+6. Ekonometrika
+    - `ekon`
+    - `ekono`
+    - `ekonom`
+    - `ekonometrika`
+
+For more information, refer to the source code on `make_matkul_abbreviation` function inside [this file](https://github.com/lahdjirayhan/drive-kesma-library-linker/blob/master/resources/absen.py).
+
+If you're interested to add support for other courses or to add another course code/abbreviation to the already existing courses:
+- Make a pull request and add it to the source code yourself!
+- Or you can contact me to request your courses to be added.
+
 # Notes
 
  - [1] Using the "Sign In" login page is more secure compared to previous implementation of sending `*auth USERNAME PASSWORD` over LINE chat (now deprecated, see commit history). That is because chats to official accounts **can't be unsent**. It can be deleted, but it has to be **deleted individually** on every device you are logged into (e.g. deleting it on your phone does not automatically deletes the chat history on your PC if you're logged in there, vice versa). It is a hassle and prone to be seen by people looking over your shoulder since the password (just like any other chats) will be displayed in cleartext (`PASSWORD` not `********`).
