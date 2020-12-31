@@ -26,21 +26,23 @@ from .exceptions import (
 
 # Custom-defined helpers
 def make_matkul_abbreviation():
-  abbrevs = {
-    ("teksim", "teknik simulasi"): "Teknik Simulasi",
-    ("ad", "andat", "analisis data"): "Analisis Data",
-    ("mm", "manmut", "manajemen mutu"): "Manajemen Mutu",
-    ("sml", "statistical machine learning"): "Statistical Machine Learning",
-    ("ofstat", "offstat", "statof", "statoff", "statistika ofisial"): "Statistika Ofisial",
-    ("ekon", "ekono", "ekonom", "ekonometrika"): "Ekonometrika"
-  }
-  result = {}
-  for k, v in abbrevs.items():
-    for key in k:
-      result[key] = v
-  return result
+    abbrevs = {
+        ("teksim", "teknik simulasi"): "Teknik Simulasi",
+        ("ad", "andat", "analisis data"): "Analisis Data",
+        ("mm", "manmut", "manajemen mutu"): "Manajemen Mutu",
+        ("sml", "statistical machine learning"): "Statistical Machine Learning",
+        ("ofstat", "offstat", "statof", "statoff", "statistika ofisial"): "Statistika Ofisial",
+        ("ekon", "ekono", "ekonom", "ekonometrika"): "Ekonometrika"
+    }
+    result = {}
+    for k, v in abbrevs.items():
+        for key in k:
+            if key in result:
+                print("Warning: there is collision on abbreviation. Abbreviation {key} will be overwritten from {old} to {new}".format(key=key, old=result[key], new=v))
+            result[key] = v
+    return result
 
-matkul_abbreviations = make_matkul_abbreviation()
+MATKUL_ABBREVIATIONS = make_matkul_abbreviation()
 
 def make_options():
     op = webdriver.ChromeOptions()
@@ -293,7 +295,7 @@ def absen_from_line(unparsed_text, user_id):
             raise WrongSpecificationError
         
         try:
-            matkul_proper_name = matkul_abbreviations[matkul]
+            matkul_proper_name = MATKUL_ABBREVIATIONS[matkul]
         except KeyError as error:
             messenger.add_reply(TextSendMessage("Matkul name is wrong or not recognized!"))
             raise WrongSpecificationError
@@ -311,8 +313,6 @@ def absen_from_line(unparsed_text, user_id):
             u, p = fetch_credentials(user_id)
         except AuthorizationRetrievalError:
             messenger.add_reply(TextSendMessage("Unable to retrieve authorization details associated with this LINE account."))
-            raise
-        except:
             raise
         
         try:
