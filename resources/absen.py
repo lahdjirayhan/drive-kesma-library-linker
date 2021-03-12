@@ -27,12 +27,17 @@ from .exceptions import (
 # Custom-defined helpers
 def make_matkul_abbreviation():
     abbrevs = {
+        # Semester 7
         ("teksim", "teknik simulasi"): "Teknik Simulasi",
         ("ad", "andat", "analisis data"): "Analisis Data",
         ("mm", "manmut", "manajemen mutu"): "Manajemen Mutu",
         ("sml", "statistical machine learning"): "Statistical Machine Learning",
         ("ofstat", "offstat", "statof", "statoff", "statistika ofisial"): "Statistika Ofisial",
-        ("ekon", "ekono", "ekonom", "ekonometrika"): "Ekonometrika"
+        ("ekon", "ekono", "ekonom", "ekonometrika"): "Ekonometrika",
+        
+        # Semester 8
+        ("ansur", "survival", "analisis survival"): "Analisis Survival",
+        ("statcon", "statcons", "statistical consulting"): "Statistical Consulting"
     }
     result = {}
     for k, v in abbrevs.items():

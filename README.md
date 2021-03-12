@@ -77,6 +77,14 @@ Supported course codes:
     - `ekono`
     - `ekonom`
     - `ekonometrika`
+7. Analisis Survival
+    - `ansur`
+    - `survival`
+    - `analisis survival`
+8. Statistical Consulting
+    - `statcon`
+    - `statcons`
+    - `statistical consulting`
 
 For more information, refer to the source code on `make_matkul_abbreviation` function inside [this file](https://github.com/lahdjirayhan/drive-kesma-library-linker/blob/master/resources/absen.py).
 
