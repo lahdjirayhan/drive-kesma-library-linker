@@ -1,5 +1,6 @@
 import time
 import timeit
+import logging
 from datetime import datetime, timedelta
 from decouple import config
 from babel.dates import format_date, format_time, format_datetime
@@ -12,6 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from linebot.models import TextSendMessage
 from .utils import Messenger
+from .utils.course import MATKUL_ABBREVIATIONS, CLASSROOM_COURSE_TO_ID_DICT
 from .access_db import fetch_credentials
 from .exceptions import (
     AuthorizationRetrievalError,
@@ -24,30 +26,8 @@ from .exceptions import (
     WrongSpecificationError
 )
 
-# Custom-defined helpers
-def make_matkul_abbreviation():
-    abbrevs = {
-        # Semester 7
-        ("teksim", "teknik simulasi"): "Teknik Simulasi",
-        ("ad", "andat", "analisis data"): "Analisis Data",
-        ("mm", "manmut", "manajemen mutu"): "Manajemen Mutu",
-        ("sml", "statistical machine learning"): "Statistical Machine Learning",
-        ("ofstat", "offstat", "statof", "statoff", "statistika ofisial"): "Statistika Ofisial",
-        ("ekon", "ekono", "ekonom", "ekonometrika"): "Ekonometrika",
-        
-        # Semester 8
-        ("ansur", "survival", "analisis survival"): "Analisis Survival",
-        ("statcon", "statcons", "statistical consulting"): "Statistical Consulting"
-    }
-    result = {}
-    for k, v in abbrevs.items():
-        for key in k:
-            if key in result:
-                print("Warning: there is collision on abbreviation. Abbreviation {key} will be overwritten from {old} to {new}".format(key=key, old=result[key], new=v))
-            result[key] = v
-    return result
-
-MATKUL_ABBREVIATIONS = make_matkul_abbreviation()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def make_options():
     op = webdriver.ChromeOptions()
@@ -67,7 +47,6 @@ PASSWORD_FORM = '//*[@id="password"]'
 SIGNIN_BUTTON = '//*[@id="login"]'
 KODE_PRESENSI_FORM = '//*[@id="kode_akses_mhs"]'
 SIMPAN_BUTTON = '//*[@id="submit-hadir-mahasiswa"]'
-
 
 NSE_EXCEPTION_TEXT = "NoSuchElementException encountered ({code}). Dev-only: refer to source code."
 
@@ -96,21 +75,21 @@ def absen(matkul, kode_presensi, username, password):
             time.sleep(0.5)
             driver.find_element_by_xpath(SIGNIN_BUTTON).click()
         except TimeoutException:
-            print("Initial webpage load failed")
+            logger.info("Initial webpage load failed")
             messenger.add_reply(TextSendMessage("Initial webpage load failed"))
             raise
         except NoSuchElementException:
-            print(NSE_EXCEPTION_TEXT.format(code=0))
+            logger.info(NSE_EXCEPTION_TEXT.format(code=0))
             messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=0)))
             raise
         
         # VERIFY LOGIN
         try:
             wait.until(EC.title_contains("Dashboard"))
-            print("Login successful.")
+            logger.info("Login successful.")
             messenger.add_reply(TextSendMessage("Login successful."))
         except TimeoutException:
-            print("Login unsuccessful.")
+            logger.info("Login unsuccessful.")
             messenger.add_reply(TextSendMessage("Login unsuccessful."))
             raise LoginFailedError
         
@@ -119,30 +98,30 @@ def absen(matkul, kode_presensi, username, password):
             wait.until(EC.visibility_of_element_located((By.TAG_NAME, 'li')))
             list_of_li = driver.find_elements_by_tag_name('li')
         except TimeoutException:
-            print("Fail to get list of courses.")
+            logger.info("Fail to get list of courses.")
             messenger.add_reply(TextSendMessage("Fail to get list of courses."))
             raise
         except NoSuchElementException:
-            print(NSE_EXCEPTION_TEXT.format(code=1))
+            logger.info(NSE_EXCEPTION_TEXT.format(code=1))
             messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=1)))
             raise
         
         # SELECT INFERRED COURSE
         try:
             for entry in list_of_li:
-                print(entry.find_element_by_tag_name('a').text)
-                print(entry.find_element_by_tag_name('a').get_attribute('href'))
+                logger.info(entry.find_element_by_tag_name('a').text)
+                logger.info(entry.find_element_by_tag_name('a').get_attribute('href'))
                 if matkul in entry.find_element_by_tag_name('a').text:
-                    print(matkul, "found!")
+                    logger.info(matkul, "found!")
                     driver.get(entry.find_element_by_tag_name('a').get_attribute('href'))
                     raise Exception
             raise CourseNotFoundError
         except CourseNotFoundError:
-            print("Course with the name specified was not found.")
+            logger.info("Course with the name specified was not found.")
             messenger.add_reply(TextSendMessage("Course with the name specified not found."))
             raise
         except NoSuchElementException:
-            print(NSE_EXCEPTION_TEXT.format(code=2))
+            logger.info(NSE_EXCEPTION_TEXT.format(code=2))
             messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=2)))
             raise
         except Exception:
@@ -158,11 +137,11 @@ def absen(matkul, kode_presensi, username, password):
             course_dates = [entry.find_element_by_xpath('.//tr/td[2]/p[1]').text for entry in course_entries]
             course_statuses = [entry.find_element_by_xpath('.//td[@class = "jenis-hadir-mahasiswa"]').text for entry in course_entries]
         except TimeoutException:
-            print("Fail to get list of schedules.")
+            logger.info("Fail to get list of schedules.")
             messenger.add_reply(TextSendMessage("Fail to get list of schedules."))
             raise
         except NoSuchElementException:
-            print(NSE_EXCEPTION_TEXT.format(code=3))
+            logger.info(NSE_EXCEPTION_TEXT.format(code=3))
             messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=3)))
             raise
 
@@ -225,15 +204,15 @@ def absen(matkul, kode_presensi, username, password):
                 raise TodayEntryNotActionableError
 
         except NoSuchElementException:
-            print(NSE_EXCEPTION_TEXT.format(code=5))
+            logger.info(NSE_EXCEPTION_TEXT.format(code=5))
             messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=5)))
             raise
         except TodayEntryAttendedError:
-            print("Today's entry is already attended.")
+            logger.info("Today's entry is already attended.")
             messenger.add_reply(TextSendMessage("Today's entry is already attended."))
             raise
         except TodayEntryNotActionableError:
-            print("Today's entry is neither HADIR nor ALPA.")
+            logger.info("Today's entry is neither HADIR nor ALPA.")
             messenger.add_reply(TextSendMessage("Today's entry is neither HADIR nor ALPA."))
             raise
         
@@ -241,7 +220,7 @@ def absen(matkul, kode_presensi, username, password):
         try:
             selected_entry.find_element_by_xpath('.//*[contains(@data-target, "#modal-hadir")]').click()
         except NoSuchElementException:
-            print(NSE_EXCEPTION_TEXT.format(code=6))
+            logger.info(NSE_EXCEPTION_TEXT.format(code=6))
             messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=6)))
             raise
         
@@ -251,11 +230,11 @@ def absen(matkul, kode_presensi, username, password):
             time.sleep(0.5)
             driver.find_element_by_xpath(SIMPAN_BUTTON).click()
         except TimeoutException:
-            print("Fail to get widget box for kode presensi.")
+            logger.info("Fail to get widget box for kode presensi.")
             messenger.add_reply(TextSendMessage("Fail to get widget box for kode presensi."))
             raise
         except NoSuchElementException:
-            print(NSE_EXCEPTION_TEXT.format(code=7))
+            logger.info(NSE_EXCEPTION_TEXT.format(code=7))
             messenger.add_reply(TextSendMessage(NSE_EXCEPTION_TEXT.format(code=7)))
             raise
         
@@ -269,14 +248,14 @@ def absen(matkul, kode_presensi, username, password):
         except NoSuchElementException:
             alert_text = "Tidak ada pemberitahuan berhasil/gagal di webpage."
         finally:            
-            print(alert_text)
+            logger.info(alert_text)
             messenger.add_reply(TextSendMessage(alert_text))
             
             # Make absensi status to be sent first rather than last.
             # Is it good thing?
             # messenger.reply_array.append(messenger.reply_array.pop(0))
     except Exception as error:
-        print("An exception in absen:\n{}".format(error))
+        logger.info("An exception in absen:\n{}".format(error))
     
     driver.quit()
     return messenger
@@ -326,7 +305,7 @@ def absen_from_line(unparsed_text, user_id):
             raise
 
     except Exception as error:
-        print("An exception in absen_from_line:\n{}".format(error))
+        logger.info("An exception in absen_from_line:\n{}".format(error))
     
-    print("Time elapsed in executing request:", timedelta(seconds = timeit.default_timer() - start))
+    logger.info("Time elapsed in executing request: {}".format(str(timedelta(seconds = timeit.default_timer() - start))))
     return messenger
