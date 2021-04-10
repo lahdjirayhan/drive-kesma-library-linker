@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from linebot.models import TextSendMessage
 from .utils import Messenger
-from .utils.course import MATKUL_ABBREVIATIONS, CLASSROOM_COURSE_TO_ID_DICT
+from .utils.course import MATKUL_ABBREVIATIONS
 from .access_db import fetch_credentials
 from .exceptions import (
     AuthorizationRetrievalError,

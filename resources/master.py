@@ -5,6 +5,7 @@ from .games import DriveLinker
 
 from .absen import absen_from_line
 from .access_db import access_database_from_line
+from .zoom import find_zoom_link_from_line
 
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
@@ -60,7 +61,25 @@ class MasterDriveHandler:
             self.bot.push_message(
                 target_id,
                 reply_array
-            ) 
+            )
+    
+    def try_send_reply_then_send_push(self, token, target_id, reply_array):
+        """
+        Try sending reply_array as a reply. If it fails due to timeout,
+        and thus invalid token, send reply_array as push message instead.
+        """
+        # This is implemented when its-zoom is added, not to violate Don't Repeat Yourself principle.
+        try:
+            self.send_reply(
+                token,
+                reply_array
+            )
+        except LineBotApiError as error:
+            if error.error.message == "Invalid reply token":
+                self.send_push(
+                    target_id,
+                    reply_array
+                )
     
     def add_player_to_game(self, user_id, group_id):
         if user_id not in self.memberships:
@@ -144,18 +163,7 @@ class MasterDriveHandler:
             received_messenger = absen_from_line(received_text[1:], user_id=user_id)
             
             # If reply_message results in an error, do push_message
-            try:
-                self.send_reply(
-                    token,
-                    received_messenger.reply_array
-                )
-            except LineBotApiError as error:
-                if error.error.message == "Invalid reply token":
-                    self.send_push(
-                        user_id,
-                        received_messenger.reply_array
-                    )
-                    return
+            self.try_send_reply_then_send_push(token, user_id, received_messenger.reply_array)
         
         elif received_text.startswith("*"):
             # Assure the database access will only work in private chat with OA.
@@ -168,6 +176,15 @@ class MasterDriveHandler:
                 received_messenger.reply_array
             )
         
+        elif received_text.startswith("^"):
+            # Assure the zoom finding access will only work in private chat with OA.
+            if user_id != group_id:
+                return
+            # Send unparsed text but without the ^ sign
+            received_messenger = find_zoom_link_from_line(received_text[1:], user_id=user_id)
+            
+            # If reply_message results in an error, do push_message
+            self.try_send_reply_then_send_push(token, user_id, received_messenger.reply_array)
         else:
             try:
                 received_messenger = self.games[self.memberships[user_id]].parse_and_reply(received_text, user_id, display_name, group_id)
