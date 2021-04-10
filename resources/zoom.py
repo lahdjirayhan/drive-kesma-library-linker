@@ -108,7 +108,7 @@ class ClassroomZoomHandler:
     
     def do_navigate_to_login_page_from_landing_page(self):
         try:
-            self.wait.until(EC.presence_of_element_located((By.XPATH, LOGIN_WITH_MYITS_BUTTON)))
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, LOGIN_WITH_MYITS_BUTTON)))
         except TimeoutException:
             self.logger.error("Unable to load login page. Detail: LOGIN_WITH_MYITS_BUTTON not detected.")
             raise
