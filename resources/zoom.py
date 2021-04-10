@@ -76,14 +76,17 @@ class ClassroomZoomHandler:
     def make_options(self):
         if self.local:
             op = webdriver.FirefoxOptions()
+            op.add_argument("--disable-dev-shm-usage")
+            op.add_argument("--no-sandbox")
         else:
             op = webdriver.ChromeOptions()
-            op.binary_location = config("GOOGLE_CHROME_BIN")
             op.add_argument('--headless')
-            
-        op.add_argument("--disable-dev-shm-usage")
-        op.add_argument("--no-sandbox")
+            op.add_argument("--disable-dev-shm-usage")
+            op.add_argument("--no-sandbox")
+            op.binary_location = config("GOOGLE_CHROME_BIN")
         return op
+
+
 
     def start_webdriver(self):
         self.logger.info("Initializing webdriver.")
@@ -93,13 +96,13 @@ class ClassroomZoomHandler:
         else:
             self.driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, options=self.options)
             self.wait = WebDriverWait(self.driver, 5)
-        
+            
         self.logger.info(
             "Webdriver initialized: {} {} on {} {}.".format(
-                self.driver.capabilities['browserName'].upper(),
-                self.driver.capabilities['browserVersion'],
-                self.driver.capabilities['platformName'].upper(),
-                self.driver.capabilities['platformVersion']
+                self.driver.capabilities.get('browserName', 'NO_BROWSER_NAME').upper(),
+                self.driver.capabilities.get('browserVersion', 'NO_BROWSER_VERSION'),
+                self.driver.capabilities.get('platformName', 'NO_PLATFORM_NAME').upper(),
+                self.driver.capabilities.get('platformVersion', 'NO_PLATFORM_VERSION')
             )
         )
     
