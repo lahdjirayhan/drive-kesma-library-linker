@@ -217,8 +217,8 @@ def find_zoom_link_from_line(unparsed_text, user_id):
         zoom_handler.perform_action_obtain_zoom_link()
 
         replies = [
-            '\n'.join(zoom_handler.message_list),
-            zoom_handler.most_recent_zoom_link
+            TextSendMessage('\n'.join(zoom_handler.message_list)),
+            TextSendMessage(zoom_handler.most_recent_zoom_link)
         ]
 
         messenger.add_replies(replies)

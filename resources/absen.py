@@ -112,7 +112,7 @@ def absen(matkul, kode_presensi, username, password):
                 logger.info(entry.find_element_by_tag_name('a').text)
                 logger.info(entry.find_element_by_tag_name('a').get_attribute('href'))
                 if matkul in entry.find_element_by_tag_name('a').text:
-                    logger.info(matkul, "found!")
+                    logger.info("{} found!".format(matkul))
                     driver.get(entry.find_element_by_tag_name('a').get_attribute('href'))
                     raise Exception
             raise CourseNotFoundError

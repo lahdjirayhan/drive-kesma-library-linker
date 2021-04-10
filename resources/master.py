@@ -185,6 +185,7 @@ class MasterDriveHandler:
             
             # If reply_message results in an error, do push_message
             self.try_send_reply_then_send_push(token, user_id, received_messenger.reply_array)
+            
         else:
             try:
                 received_messenger = self.games[self.memberships[user_id]].parse_and_reply(received_text, user_id, display_name, group_id)
