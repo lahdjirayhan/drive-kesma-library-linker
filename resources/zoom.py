@@ -21,6 +21,9 @@ from .exceptions import (
     WrongSpecificationError
 )
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 # https://stackoverflow.com/questions/36408496/python-logging-handler-to-append-to-list
 # Both answers combined
 class ListHandler(logging.Handler):
@@ -55,9 +58,10 @@ class ClassroomZoomHandler:
         # ZOOM/CLASSROOM/COURSE RELATED ATTRIBUTES
         self.USERNAME = username
         self.PASSWORD = password
+        self.LOGIN_LINK = "https://classroom.its.ac.id/auth/oidc"
         self.COURSE_HOME_LINK = "https://classroom.its.ac.id/course/view.php?id=" + str(course_id)
         self.potential_mod_zoom_links = []
-        self.most_recent_zoom_link = None
+        self.most_recent_zoom_link = "NO LINK"
 
         # LOGGING/LINE CHAT RELATED ATTRIBUTES
         self.message_list = []
@@ -178,12 +182,11 @@ class ClassroomZoomHandler:
             return
 
         self.logger.error("No zoom link is found.")
-        self.most_recent_zoom_link = "NO LINK"
     
     def perform_action_obtain_zoom_link(self):
         self.start_webdriver()
         try:
-            self.driver.get("https://classroom.its.ac.id/auth/oidc")
+            self.driver.get(self.LOGIN_LINK)
             self.do_login()
             self.driver.get(self.COURSE_HOME_LINK)
             self.get_potential_mod_zoom_links()
@@ -229,7 +232,7 @@ def find_zoom_link_from_line(unparsed_text, user_id):
 
         messenger.add_replies(replies)
     except Exception as error:
-        logging.info("An exception in find_zoom_link_from_line:\n{}".format(error))
+        logger.error("An exception in find_zoom_link_from_line:\n{}".format(error))
     
-    logging.info("Time elapsed in executing request: {}".format(str(timedelta(seconds = timeit.default_timer() - start))))
+    logger.info("Time elapsed in executing request: {}".format(str(timedelta(seconds = timeit.default_timer() - start))))
     return messenger
