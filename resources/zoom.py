@@ -65,7 +65,7 @@ class ClassroomZoomHandler:
         self.setup_logger()
 
     def setup_logger(self):
-        self.logger = logging.getLogger(str(uuid.uuid4()))
+        self.logger = logging.getLogger(__name__ + "." + str(uuid.uuid4()))
         self.logger.setLevel(logging.INFO) # DEBUG will print Selenium's debug logs, quite annoying
         self.logger.addHandler(ListHandler(message_list=self.message_list))
         # Side note regarding logging: Heroku logs already contain date and time.
@@ -96,17 +96,20 @@ class ClassroomZoomHandler:
         else:
             self.driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, options=self.options)
             self.wait = WebDriverWait(self.driver, 5)
-            
+        
+        browser_name = self.driver.capabilities.get('browserName', 'NO_BROWSER_NAME').upper()
+        browser_version = self.driver.capabilities.get('browserVersion', 'NO_BROWSER_VERSION')
+        platform_name = self.driver.capabilities.get('platformName', 'NO_PLATFORM_NAME').upper()
+        platform_version = self.driver.capabilities.get('platformVersion', 'NO_PLATFORM_VERSION')
+        
         self.logger.info(
             "Webdriver initialized: {} {} on {} {}.".format(
-                self.driver.capabilities.get('browserName', 'NO_BROWSER_NAME').upper(),
-                self.driver.capabilities.get('browserVersion', 'NO_BROWSER_VERSION'),
-                self.driver.capabilities.get('platformName', 'NO_PLATFORM_NAME').upper(),
-                self.driver.capabilities.get('platformVersion', 'NO_PLATFORM_VERSION')
+                browser_name, browser_version, platform_name, platform_version
             )
         )
     
     def do_navigate_to_login_page_from_landing_page(self):
+        # Not currently used because there's always an 'element click intercepted' error.
         try:
             self.wait.until(EC.element_to_be_clickable((By.XPATH, LOGIN_WITH_MYITS_BUTTON)))
         except TimeoutException:
@@ -180,9 +183,9 @@ class ClassroomZoomHandler:
     def perform_action_obtain_zoom_link(self):
         self.start_webdriver()
         try:
-            self.driver.get(self.COURSE_HOME_LINK)
-            self.do_navigate_to_login_page_from_landing_page()
+            self.driver.get("https://classroom.its.ac.id/auth/oidc")
             self.do_login()
+            self.driver.get(self.COURSE_HOME_LINK)
             self.get_potential_mod_zoom_links()
             self.get_most_recent_zoom_link_from_all_potentials()
         except Exception as e:
