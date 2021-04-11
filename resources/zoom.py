@@ -152,7 +152,7 @@ class ClassroomZoomHandler:
         )
     
     def get_most_recent_zoom_link_from_all_potentials(self):
-        main_window_handle = self.driver.current_window_handle
+        # main_window_handle = self.driver.current_window_handle
         for link, text in self.potential_mod_zoom_links:
             meeting_title = text.split("\n")[0]
             self.logger.info("Checking link for meeting: {}".format(meeting_title))
@@ -162,13 +162,13 @@ class ClassroomZoomHandler:
                 self.driver.find_element_by_xpath(JOIN_BUTTON).click()
                 # https://stackoverflow.com/a/32580581/11316205
                 # new_window_handle = next((i for i in self.driver.current_window_handle if i != main_window_handle), None)
-                new_window_handle = self.driver.window_handles[-1]
-                self.driver.switch_to.window(new_window_handle)
+                # new_window_handle = self.driver.window_handles[-1]
+                # self.driver.switch_to.window(new_window_handle)
             except NoSuchElementException:
                 # Zoom join button not found
                 self.logger.error("Zoom join button not found.")
-                self.driver.close()
-                self.driver.switch_to.window(main_window_handle)
+                # self.driver.close()
+                # self.driver.switch_to.window(main_window_handle)
                 continue
             
             try:
