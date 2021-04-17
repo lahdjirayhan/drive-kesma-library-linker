@@ -1,33 +1,33 @@
 # Selenium-related custom exceptions:
 class LoginFailedError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Login to presensi ITS failed.")
+    def __init__(self, msg="Login to presensi ITS failed.", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
 
 class CourseNotFoundError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Course with name specified was not found.")
+    def __init__(self, msg="Course with name specified was not found.", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
         
 class ScheduleNotFoundError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("No schedule with today's date.")
+    def __init__(self, msg="No schedule with today's date.", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
 
 class TodayEntryAttendedError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Today's entry has been attended.")
+    def __init__(self, msg="Today's entry has been attended.", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
 
 class TodayEntryNotActionableError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Today's entry is neither HADIR or ALPA.")
+    def __init__(self, msg="Today's entry is neither HADIR or ALPA.", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
 
 class NoUnattendedEntryError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("All entries are already HADIR.")
+    def __init__(self, msg="All entries are already HADIR.", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
 
 class WrongSpecificationError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("A misspecification of matkul and/or absen happened.")
+    def __init__(self, msg="A misspecification of matkul and/or absen happened.", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
 
 # Flask-SQLAlchemy-related custom exceptions:
 class AuthorizationRetrievalError(Exception):
-    def __init__(self, *args, **kwargs):
-        super().__init__("Something wrong with retrieving the authorization from database.")
+    def __init__(self, msg="Failed to retrieve authorization from database", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
