@@ -135,7 +135,8 @@ class TimetablePage(BasePage):
         self.TIMETABLE_ROW_CHILD_ELEMENT_STATUS = By.XPATH, './/td[@class = "jenis-hadir-mahasiswa"]'
             
     def do_attendance(self, attendance_code):
-        entry = self.find_desired_timetable_entry()
+        if not (entry := self.find_desired_timetable_entry()):
+            return
         self.bring_up_widget(entry)
         self.wait_until_presence_of_element_located(self.KODE_PRESENSI_FORM)
         self.fill_form_value(self.KODE_PRESENSI_FORM, attendance_code)
