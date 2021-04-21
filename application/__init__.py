@@ -30,7 +30,7 @@ def create_app():
 
     # Add mastermind
     from application.master import Mastermind
-    app.config['mastermind'] = Mastermind(drive, db)
+    app.config['MASTERMIND'] = Mastermind(drive, db)
 
     # Register blueprints
     from application.auth.routes import auth
