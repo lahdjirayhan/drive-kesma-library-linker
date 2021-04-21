@@ -59,7 +59,7 @@ class Mastermind:
         """
         if text[0] in self.identifiers:
             key, argument = text[0], text[1:].strip()
-        elif text.partition(" ", 1)[0] in self.identifiers:
+        elif text.partition(" ")[0] in self.identifiers:
             key, _, argument = text.partition(" ")
         else:
             key, argument = None, None
