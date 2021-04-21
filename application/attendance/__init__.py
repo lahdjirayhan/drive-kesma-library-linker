@@ -1,0 +1,1 @@
+from .absen import absen_from_line

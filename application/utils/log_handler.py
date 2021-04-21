@@ -1,5 +1,7 @@
 import logging
 
+# https://stackoverflow.com/questions/36408496/python-logging-handler-to-append-to-list
+# Both answers combined
 class ListHandler(logging.Handler):
     def __init__(self, *args, message_list, **kwargs):
         logging.Handler.__init__(self, *args, **kwargs)

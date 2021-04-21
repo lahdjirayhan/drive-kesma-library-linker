@@ -3,8 +3,8 @@ import furl
 import uuid
 from decouple import config
 import timeit
-from datetime import datetime, timedelta
-from babel.dates import format_date, format_time, format_datetime
+from datetime import timedelta
+# from babel.dates import format_date, format_time, format_datetime
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -12,11 +12,10 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from linebot.models import TextSendMessage
-from .utils import Messenger
-from .utils.course import MATKUL_ABBREVIATIONS, CLASSROOM_COURSE_TO_ID_DICT
-from .access_db import fetch_credentials
-from .exceptions import (
+from application.utils.course import MATKUL_ABBREVIATIONS, CLASSROOM_COURSE_TO_ID_DICT
+from application.utils.log_handler import ListHandler
+from application.auth.access_db import fetch_credentials
+from application.exceptions import (
     AuthorizationRetrievalError,
     WrongSpecificationError
 )
@@ -24,15 +23,7 @@ from .exceptions import (
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# https://stackoverflow.com/questions/36408496/python-logging-handler-to-append-to-list
-# Both answers combined
-class ListHandler(logging.Handler):
-    def __init__(self, *args, message_list, **kwargs):
-        logging.Handler.__init__(self, *args, **kwargs)
-        self.setFormatter(logging.Formatter('%(message)s'))
-        self.message_list = message_list
-    def emit(self, record):
-        self.message_list.append(record.getMessage())
+
 
 LOCAL_ENVIRONMENT = config('LOCAL_ENVIRONMENT', default=False, cast=bool)
 GECKODRIVER_PATH = config('GECKODRIVER_PATH', default='', cast=str)
@@ -205,13 +196,13 @@ class ClassroomZoomHandler:
 
 def find_zoom_link_from_line(unparsed_text, user_id):
     start = timeit.default_timer()
-    messenger = Messenger()
+    message_list = []
     matkul = unparsed_text
     try:
         try:
             matkul_proper_name = MATKUL_ABBREVIATIONS[matkul]
         except KeyError:
-            messenger.add_reply(TextSendMessage("Matkul name is wrong or not recognized!"))
+            message_list.append("Matkul name is wrong or not recognized!")
             raise WrongSpecificationError
         
         matkul_id = CLASSROOM_COURSE_TO_ID_DICT[matkul_proper_name]
@@ -219,20 +210,20 @@ def find_zoom_link_from_line(unparsed_text, user_id):
         try:
             u, p = fetch_credentials(user_id)
         except AuthorizationRetrievalError:
-            messenger.add_reply(TextSendMessage("Unable to retrieve authorization details associated with this LINE account."))
+            message_list.append("Unable to retrieve authorization details associated with this LINE account.")
             raise
 
         zoom_handler = ClassroomZoomHandler(matkul_id, u, p)
         zoom_handler.perform_action_obtain_zoom_link()
 
         replies = [
-            TextSendMessage('\n'.join(zoom_handler.message_list)),
-            TextSendMessage(zoom_handler.most_recent_zoom_link)
+            '\n'.join(zoom_handler.message_list),
+            zoom_handler.most_recent_zoom_link
         ]
 
-        messenger.add_replies(replies)
+        message_list.extend(replies)
     except Exception as error:
         logger.error("An exception in find_zoom_link_from_line:\n{}".format(error))
     
     logger.info("Time elapsed in executing request: {}".format(str(timedelta(seconds = timeit.default_timer() - start))))
-    return messenger
+    return message_list

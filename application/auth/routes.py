@@ -1,14 +1,13 @@
-from flask import Blueprint, render_template, url_for, redirect, request
-from .models import db, UserRegister, UserAuth
-from .access_db import add_userauth, delete_userauth, update_userauth
+from flask import Blueprint, render_template, request
+from application.models import db, UserRegister, UserAuth
+from application.auth.access_db import add_userauth, update_userauth
 
-authorization = Blueprint("authorize", __name__)
+auth = Blueprint("authorize", __name__)
 
-@authorization.route("/authorize", methods = ["GET", "POST"])
-def authorize(*args, **kwargs):
+@auth.route("/", methods = ["GET", "POST"])
+def authorization():
     if request.method == 'GET':
         m = request.args["secret_code"]
-        print(m)
         user_register = UserRegister.query.filter_by(m=m).first()
         if user_register is None:
             return render_template('404.html')

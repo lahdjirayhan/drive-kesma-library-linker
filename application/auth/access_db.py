@@ -1,11 +1,9 @@
 import uuid
-from linebot.models import TextSendMessage
 from flask import url_for, request
 
-from .utils import Messenger
-from .utils import encrypt_fernet, decrypt_fernet
-from .models import UserAuth, UserRegister
-from .exceptions import AuthorizationRetrievalError
+from application.utils import encrypt_fernet, decrypt_fernet
+from application.models import UserAuth, UserRegister
+from application.exceptions import AuthorizationRetrievalError
 
 KEYWORD_AUTHORIZE = "auth"
 KEYWORD_DEAUTHORIZE = "deauth"
@@ -28,7 +26,7 @@ def delete_userauth(db, user_id):
     db.session.commit()
 
 def access_database_from_line(unparsed_text, db, user_id):
-    messenger = Messenger()
+    message_list = []
     keyword = unparsed_text
     
     if keyword == KEYWORD_AUTHORIZE:
@@ -37,25 +35,25 @@ def access_database_from_line(unparsed_text, db, user_id):
         db.session.add(UserRegister(m, user_id))
         db.session.commit()
 
-        link = request.url_root.replace("http://", "https://", 1) + url_for('authorize.authorize', secret_code=m)[1:]
+        link = request.url_root.replace("http://", "https://", 1) + url_for('authorize', secret_code=m)[1:]
 
-        messenger.add_reply(TextSendMessage(
+        message_list.append(
             "Please fill in this login form here to authenticate this bot to do your presensi:\n{}".format(link)
-        ))
+        )
         
     elif keyword == KEYWORD_DEAUTHORIZE:
         # Remove from database
         UserAuth.query.filter_by(user_id=user_id).delete()
         db.session.commit()
-        messenger.add_reply(TextSendMessage(
+        message_list.append(
             "User details deleted successfully!"
-        ))
+        )
     else:
-        messenger.add_reply(TextSendMessage(
+        message_list.append(
             "Error: command unknown."
-        ))
+        )
     
-    return messenger
+    return message_list
 
 # Helper function to make it easier for the program to fetch credentials
 def fetch_credentials(user_id):

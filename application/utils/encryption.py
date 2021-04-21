@@ -6,7 +6,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-def initialize_credential_decryption():
+def initialize_credential_decryption(path):
+    # TODO (Rayhan) specify path prepending. I intend to save enc_creds and enc_json in drive_linker folder
     key = config("FERNET_KEY").encode()
     with open("enc_creds.txt") as f:
         enc_creds = f.read().encode()
