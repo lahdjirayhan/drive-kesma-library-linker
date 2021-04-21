@@ -5,7 +5,7 @@ from application.linebot.webhook_handler import handler
 
 line_callback = Blueprint('callback', __name__)
 
-@line_callback.route("/", methods=['POST'])
+@line_callback.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
 
