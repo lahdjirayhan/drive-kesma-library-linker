@@ -25,7 +25,7 @@ class Mastermind:
             "^": "zoomfinding",
             "*": "database access/authorization",
             "ebook": "drive for ebook",
-            "bank soal": "drive for bank soal"
+            "soal": "drive for bank soal"
         }
     
     def query_reply(self, received_text, user_id, group_id):
