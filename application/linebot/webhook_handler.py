@@ -30,9 +30,6 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 LINE_BOT_ACCESS_TOKEN = config("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = CustomLineBotApi(LINE_BOT_ACCESS_TOKEN)
 
-
-
-
 # Add function to handle MessageEvent with TextMessage type
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
@@ -58,4 +55,4 @@ def handle_text_message(event):
             reply[index] = TextSendMessage(item)
             continue
 
-    line_bot_api.try_reply_then_push(token, reply, user_id)
+    line_bot_api.try_reply_then_push(token, user_id, reply)
