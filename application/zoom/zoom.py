@@ -81,8 +81,6 @@ class ClassroomZoomHandler:
             op.binary_location = config("GOOGLE_CHROME_BIN")
         return op
 
-
-
     def start_webdriver(self):
         self.logger.info("Initializing webdriver.")
         if self.local:
@@ -151,10 +149,6 @@ class ClassroomZoomHandler:
             try:
                 # self.wait.until(EC.presence_of_element_located((By.XPATH, JOIN_BUTTON))) # If not found, waits for 10 sec. Not nice. Redo.
                 self.driver.find_element_by_xpath(JOIN_BUTTON).click()
-                # https://stackoverflow.com/a/32580581/11316205
-                # new_window_handle = next((i for i in self.driver.current_window_handle if i != main_window_handle), None)
-                # new_window_handle = self.driver.window_handles[-1]
-                # self.driver.switch_to.window(new_window_handle)
             except NoSuchElementException:
                 # Zoom join button not found
                 self.logger.error("Zoom join button not found.")
@@ -163,6 +157,10 @@ class ClassroomZoomHandler:
                 continue
             
             try:
+                # https://stackoverflow.com/a/32580581/11316205
+                # new_window_handle = next((i for i in self.driver.current_window_handle if i != main_window_handle), None)
+                new_window_handle = self.driver.window_handles[-1]
+                self.driver.switch_to.window(new_window_handle)
                 self.wait.until(EC.title_contains("Launch Meeting"))
             except TimeoutException:
                 self.logger.error("Unable to load 'Launch Meeting' page. Detail: title does not contain 'Launch Meeting'.")
