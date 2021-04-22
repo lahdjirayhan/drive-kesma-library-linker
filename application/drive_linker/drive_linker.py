@@ -75,7 +75,7 @@ class DriveLinker:
         try:
             subfolder_id = self.get_folder_id_by_sorted_number(subfolder_sorted_number) if subfolder_id is None else subfolder_id
         except IndexError:
-            self.logger.info("Invalid folder number {}.".format(str(subfolder_sorted_number-1)))
+            self.logger.info("Invalid folder number {}.".format(str(int(subfolder_sorted_number)-1)))
             return ""
         
         query = self.build_query(folder_id=subfolder_id)
