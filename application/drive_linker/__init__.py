@@ -19,5 +19,5 @@ gauth = GoogleAuth()
 gauth.LoadCredentialsFile(MYCREDS_FILE_PATH)
 drive = GoogleDrive(gauth)
 
-pathlib.Path(CLIENT_SECRETS_FILE_PATH).unlink(missing_ok=True)
-pathlib.Path(MYCREDS_FILE_PATH).unlink(missing_ok=True)
+# pathlib.Path(CLIENT_SECRETS_FILE_PATH).unlink(missing_ok=True)
+# pathlib.Path(MYCREDS_FILE_PATH).unlink(missing_ok=True)

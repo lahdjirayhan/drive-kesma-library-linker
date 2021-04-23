@@ -35,7 +35,7 @@ def access_database_from_line(unparsed_text, db, user_id):
         db.session.add(UserRegister(m, user_id))
         db.session.commit()
 
-        link = request.url_root.replace("http://", "https://", 1) + url_for('authorize', secret_code=m)[1:]
+        link = request.url_root.replace("http://", "https://", 1) + url_for('authorize.authorization', secret_code=m)[1:]
 
         message_list.append(
             "Please fill in this login form here to authenticate this bot to do your presensi:\n{}".format(link)

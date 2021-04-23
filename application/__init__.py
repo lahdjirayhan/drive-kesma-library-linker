@@ -11,8 +11,8 @@ from flask_migrate import Migrate
 from flask_talisman import Talisman
 from application.configuration import Configuration
 from application.drive_linker import drive
+from application.models import db
 
-db = SQLAlchemy()
 migrate = Migrate()
 talisman = Talisman()
 
@@ -21,8 +21,7 @@ def create_app():
     app.config.from_object(Configuration)
 
     # Imported to make sure flask-migrate recognizes the models
-    # pylint: disable=unused-import
-    from application import models
+    from application import models # pylint: disable=unused-import
 
     # Initialize flask extensions
     db.init_app(app)
@@ -31,7 +30,7 @@ def create_app():
 
     # Add mastermind
     from application.master import Mastermind
-    app.config['mastermind'] = Mastermind(drive, db)
+    app.config['MASTERMIND'] = Mastermind(drive, db)
 
     # Register blueprints
     from application.auth.routes import auth

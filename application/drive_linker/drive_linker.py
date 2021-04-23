@@ -36,10 +36,8 @@ def preprocess_chat_library(doctype, sorted_number):
     
     if sorted_number is None: # If no sorted number, it means "show me all available subfolders" command.
         pass
-    elif not sorted_number.isnumeric():
-        raise WrongSpecificationError("Invalid folder number '{}'. Should give numeric value.".format(sorted_number))
-    elif not sorted_number > 0:
-        raise WrongSpecificationError("Invalid folder number '{}'. Should give positive value.".format(sorted_number))
+    elif not (sorted_number.isdecimal() and int(sorted_number) > 0):
+        raise WrongSpecificationError("Invalid folder number '{}'. Should give positive numeric value.".format(sorted_number))
     return doctype, sorted_number
 
 def run_library(drive, doctype, sorted_number, user_id):
@@ -77,8 +75,8 @@ class DriveLinker:
         try:
             subfolder_id = self.get_folder_id_by_sorted_number(subfolder_sorted_number) if subfolder_id is None else subfolder_id
         except IndexError:
-            self.logger.info("Invalid folder number {}.".format(str(subfolder_sorted_number-1)))
-            return ""
+            # self.logger.info("Invalid folder number {}.".format(str(int(subfolder_sorted_number)-1)))
+            return "Invalid folder number {}.".format(str(int(subfolder_sorted_number)-1))
         
         query = self.build_query(folder_id=subfolder_id)
         item_list = self.drive.ListFile(query).GetList()
@@ -98,7 +96,7 @@ class DriveLinker:
         if subfolder_sorted_number is None:
             return self.home_folder
         
-        actual_index = subfolder_sorted_number - 1 # Python is 0-indexed, but showing the list to user is 1-indexed.
+        actual_index = int(subfolder_sorted_number) - 1 # Python is 0-indexed, but showing the list to user is 1-indexed.
         query = self.build_query()
         results = self.drive.ListFile(query).GetList()
 
