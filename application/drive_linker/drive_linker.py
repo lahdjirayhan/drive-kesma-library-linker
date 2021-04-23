@@ -36,7 +36,7 @@ def preprocess_chat_library(doctype, sorted_number):
     
     if sorted_number is None: # If no sorted number, it means "show me all available subfolders" command.
         pass
-    elif not sorted_number.isdecimal():
+    elif not (sorted_number.isdecimal() and int(sorted_number) > 0):
         raise WrongSpecificationError("Invalid folder number '{}'. Should give positive numeric value.".format(sorted_number))
     return doctype, sorted_number
 
