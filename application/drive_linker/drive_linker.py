@@ -74,8 +74,10 @@ class DriveLinker:
         """
         try:
             subfolder_id = self.get_folder_id_by_sorted_number(subfolder_sorted_number) if subfolder_id is None else subfolder_id
-        except IndexError:
+        except IndexError as error:
             # self.logger.info("Invalid folder number {}.".format(str(int(subfolder_sorted_number)-1)))
+            if len(error.args) == 2:
+                return error.args[1]
             return "Invalid folder number {}.".format(str(int(subfolder_sorted_number)-1))
         
         query = self.build_query(folder_id=subfolder_id)
@@ -100,8 +102,14 @@ class DriveLinker:
         query = self.build_query()
         results = self.drive.ListFile(query).GetList()
 
-        try: item_id = results[actual_index]['id']
-        except IndexError: raise # pylint is not happy about immediately raising, but I think this is better be left explicit that I'm catching/expecting an IndexError
+        try:
+            item_id = results[actual_index]['id']
+        except IndexError as error:
+            error.args = (
+                *error.args,
+                "Invalid folder number {}. Expected range 1 - {}.".format(int(subfolder_sorted_number), len(results))
+            )
+            raise error
         return item_id
 
     def build_query(self, folder_id=None, search_by_title=None, exact_title=True):
