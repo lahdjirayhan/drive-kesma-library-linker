@@ -47,7 +47,7 @@ Usage: `!COURSE_NAME ATTENDANCE_CODE` without whitespace between `!` and `COURSE
 
 What it does: Tells the bot to go recording attendance on course `COURSE_NAME` with code `ATTENDANCE_CODE`.
 
-`COURSE_CODE` can be a full course name e.g. `statistika non parametrik`, or an abbreviation e.g. `statnonpar`. The bot does not support every possible course name or abbreviation. It has a pre-specified dictionary about these names and abbreviations.
+`COURSE_NAME` can be a full course name e.g. `statistika non parametrik`, or an abbreviation e.g. `statnonpar`. The bot does not support every possible course name or abbreviation. It has a pre-specified dictionary about these names and abbreviations.
 
 If you're interested in adding support for other courses or adding new abbreviation to already existing course, you can contact me. Better yet, you are free to open a pull request to modify the pre-specified dictionary yourself [2]!
 
@@ -60,7 +60,7 @@ Usage: `^COURSE_NAME`
 
 What it does: Tells the bot to go login to online course portal and find the available zoom link for course `COURSE_NAME`.
 
-`COURSE_CODE` can be a full course name e.g. `analisis multivariat`, or an abbreviation e.g. `multivar`. The bot does not support every possible course name or abbreviation. It has a pre-specified dictionary about these names and abbreviations.
+`COURSE_NAME` can be a full course name e.g. `analisis multivariat`, or an abbreviation e.g. `multivar`. The bot does not support every possible course name or abbreviation. It has a pre-specified dictionary about these names and abbreviations.
 
 ## `ebook`
 
@@ -83,7 +83,7 @@ Usage:
 
 What it does:
 - the `soal` command gives you all subfolders and their 'folder numbers' (one for each course, usually) within Kesma Library's bank soal folder. If you want to go to a specific course's folder, you need to remember its folder number given here.
--the `soal FOLDER_NUMBER` command gives you direct download links for a specific course's past tests. `FOLDER_NUMBER` must be taken from what the `soal` command gave previously.
+- the `soal FOLDER_NUMBER` command gives you direct download links for a specific course's past tests. `FOLDER_NUMBER` must be taken from what the `soal` command gave previously.
 
 Example of use:
 
