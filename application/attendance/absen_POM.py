@@ -11,7 +11,7 @@
 # my web app don't crash.
 
 # Note to self: at the time of writing (14th of April) the methods on these POMs don't have
-# mechanism to catch NoSuchElementException, which is kinda expected to happen sooner or later, 
+# mechanism to catch NoSuchElementException, which is kinda expected to happen sooner or later,
 # and when it happens, I don't want to be caught extremely off-guard. One way to handle this is to
 # introduce Page Elements, i.e. making a button or form or div its own Page Element class.
 # That way, I can override the .find_element() method to incorporate a simple try-catch block
@@ -69,6 +69,11 @@ class BasePage(object):
     
     def wait_until_title_contains(self, text):
         try: self.wait.until(EC.title_contains(text))
+        except TimeoutException: return False
+        return True
+    
+    def wait_until_element_clickable(self, element_locator):
+        try: self.wait.until(EC.element_to_be_clickable(element_locator))
         except TimeoutException: return False
         return True
     
@@ -138,7 +143,6 @@ class TimetablePage(BasePage):
         if not (entry := self.find_desired_timetable_entry()):
             return
         self.bring_up_widget(entry)
-        self.wait_until_presence_of_element_located(self.KODE_PRESENSI_FORM)
         self.fill_form_value(self.KODE_PRESENSI_FORM, attendance_code)
         self.click_button(self.SIMPAN_BUTTON)
         
@@ -193,3 +197,4 @@ class TimetablePage(BasePage):
 
     def bring_up_widget(self, entry):
         entry.find_element(*self.ISI_PRESENSI_HADIR_BUTTON).click()
+        self.wait_until_element_clickable(self.KODE_PRESENSI_FORM)

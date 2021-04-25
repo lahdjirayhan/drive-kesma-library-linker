@@ -5,13 +5,11 @@ import traceback
 from datetime import timedelta
 from selenium.common.exceptions import WebDriverException, NoSuchElementException
 
-from linebot.models import TextSendMessage
-from .utils import Messenger
-from .utils.course import MATKUL_ABBREVIATIONS
-from .utils.log_handler import ListHandler
-from .utils.webdriver import build_driver
-from .access_db import fetch_credentials
-from .exceptions import AuthorizationRetrievalError, WrongSpecificationError
+from application.utils.course import MATKUL_ABBREVIATIONS
+from application.utils.log_handler import ListHandler
+from application.utils.webdriver import build_driver
+from application.auth.access_db import fetch_credentials
+from application.exceptions import AuthorizationRetrievalError, WrongSpecificationError
 
 from .absen_POM import LoginPage, DashboardPage, TimetablePage
 
@@ -20,25 +18,23 @@ module_logger.setLevel(logging.DEBUG)
 
 def absen_from_line(unparsed_text, user_id):
     start_time = timeit.default_timer()
-    messenger = Messenger()
-    
+    message_list = []   
     try:
-        course_name, attendance_code = preprocess_absen(unparsed_text)
+        course_name, attendance_code = preprocess_chat_absen(unparsed_text)
         username, password = fetch_credentials(user_id)
     except (WrongSpecificationError, AuthorizationRetrievalError) as error:
         module_logger.debug(str(error))
-        messenger.add_reply(TextSendMessage(str(error)))
-        return messenger
-    
-    reply = run_attendance(username, password, course_name, attendance_code, user_id)
-    messenger.add_replies([TextSendMessage(item) for item in reply])
+        message_list.append(str(error))
+    else:
+        reply = run_attendance(username, password, course_name, attendance_code, user_id)
+        message_list.extend(reply)
     
     module_logger.info("Time elapsed in executing request: {}".format(str(timedelta(seconds = timeit.default_timer() - start_time))))
-    return messenger
+    return message_list
 
-def preprocess_absen(unparsed_text):
+def preprocess_chat_absen(unparsed_text):
     try:
-        splitlist = unparsed_text.split(' ')
+        splitlist = unparsed_text.split(' ', 1)
         matkul = splitlist[0]
         kode_absen = splitlist[1]
     except IndexError:
@@ -68,7 +64,7 @@ def run_attendance(username, password, course_name, attendance_code, user_id):
         _run_attendance(username, password, course_name, attendance_code, logger)
     except Exception:
         # The general idea of catching Exception here is to make sure
-        # program does not break because of something that is related to 
+        # program does not break because of something that is related to
         # Selenium trying to do its job. This is a necessity, albeit one
         # might argue it's an evil one. Note to self: why not catch
         # WebDriverException instead?
@@ -80,7 +76,7 @@ def run_attendance(username, password, course_name, attendance_code, user_id):
         elif isinstance(exc_value, WebDriverException):
             logger.error("The operation is likely failed due to a webdriver exception.")
         else:
-            logger.error("The operation is likely failed due to unspecified exception.")
+            logger.error("The operation is likely failed due to an unspecified exception.")
         logger.debug(traceback.format_exc())
         
     return message_list
