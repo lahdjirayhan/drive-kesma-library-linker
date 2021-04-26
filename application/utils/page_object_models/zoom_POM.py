@@ -43,12 +43,12 @@ class CourseHomePage(BasePage):
                 mod_zoom_page = ModZoomPage(self.driver, self.logger, element[0])
                 if (zoom_link := mod_zoom_page.get_zoom_link_from_button()):
                     traversal_report_per_line.append(
-                        element[1] + ": " + "LINK FOUND"
+                        element[1].partition('\n')[0] + ": " + "LINK FOUND"
                     )
                     break
                 
                 traversal_report_per_line.append(
-                    element[1] + ": " + "no link."
+                    element[1].partition('\n')[0] + ": " + "no link."
                 )
         
         traversal_report = '\n'.join(traversal_report_per_line)
