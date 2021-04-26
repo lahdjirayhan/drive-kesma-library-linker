@@ -53,7 +53,8 @@ class CourseHomePage(BasePage):
         
         traversal_report = '\n'.join(traversal_report_per_line)
         self.logger.info(traversal_report)
-        return zoom_link
+        if zoom_link:
+            self.logger.info(zoom_link)
 
     def get_potential_mod_zoom_links(self):
         # NOTE(Rayhan): Implement typehinting?
