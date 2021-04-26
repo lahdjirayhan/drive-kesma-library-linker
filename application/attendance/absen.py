@@ -11,7 +11,7 @@ from application.utils.webdriver import build_driver
 from application.auth.access_db import fetch_credentials
 from application.exceptions import AuthorizationRetrievalError, WrongSpecificationError
 
-from .absen_POM import LoginPage, DashboardPage, TimetablePage
+from application.utils.page_object_models import LoginPage, DashboardPage, TimetablePage
 
 module_logger = logging.getLogger(__name__)
 module_logger.setLevel(logging.DEBUG)
