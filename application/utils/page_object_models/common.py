@@ -110,17 +110,18 @@ class DashboardPage(BasePage):
     have almost exactly similar structure, so have this class in common.
     """
     def prepare_selectors(self):
-        self.COURSE_LIST_ELEMENT = By.TAG_NAME, 'ul'
-        self.COURSE_LIST_ITEM_ELEMENT = By.TAG_NAME, 'li'
+        self.COURSE_LINKS = By.CSS_SELECTOR, "h5>a"
     
     def get_course_link(self, course_name):
-        self.sleep()
-        ul_element = self.driver.find_element(*self.COURSE_LIST_ELEMENT)
-        list_of_li_elements = ul_element.find_elements(*self.COURSE_LIST_ITEM_ELEMENT)
-        for entry in list_of_li_elements:
-            if course_name in entry.find_element(By.TAG_NAME, 'a').text:
+        a_tags = self.get_potential_course_links()
+        for entry in a_tags:
+            if course_name in entry.text:
                 self.logger.info("Course {} is found.".format(course_name))
-                self.logger.debug((course_link := entry.find_element(By.TAG_NAME, 'a').get_attribute('href')))
+                self.logger.debug((course_link := entry.get_attribute('href')))
                 return course_link
         self.logger.info("Course {} is not found.".format(course_name))
         return None
+    
+    def get_potential_course_links(self):
+        self.wait_until_presence_of_element_located(self.COURSE_LINKS)
+        return self.driver.find_elements(*self.COURSE_LINKS)

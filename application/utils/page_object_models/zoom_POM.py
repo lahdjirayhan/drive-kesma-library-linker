@@ -7,9 +7,7 @@ from .common import BasePage, DashboardPage
 
 class ClassroomDashboardPage(DashboardPage):
     def prepare_selectors(self):
-        super().prepare_selectors()
-        
-        self.COURSE_LIST_ELEMENT = By.XPATH, '//ul[@class = "list-group"]'
+        self.COURSE_LINKS = By.CSS_SELECTOR, 'a.coursename'
 
 class ModZoomPage(BasePage):
     """
