@@ -1,9 +1,14 @@
 import furl
 
+from typing import List, Tuple, NewType
+
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
 from .common import BasePage, DashboardPage
+
+Link = NewType("Link", str)
+LinkText = NewType("Link", str)
 
 class ClassroomDashboardPage(DashboardPage):
     def prepare_selectors(self):
@@ -56,8 +61,7 @@ class CourseHomePage(BasePage):
         if zoom_link:
             self.logger.info(zoom_link)
 
-    def get_potential_mod_zoom_links(self):
-        # NOTE(Rayhan): Implement typehinting?
+    def get_potential_mod_zoom_links(self) -> List[Tuple[Link, LinkText]]:
         potential_elements = self.driver.find_elements(*self.MOD_ZOOM_HYPERLINK_ELEMENT)
         potential_mod_zoom_links = [(elem.get_attribute('href'), elem.text)
                                          for elem in potential_elements][::-1] # Reverse, most recent is first
