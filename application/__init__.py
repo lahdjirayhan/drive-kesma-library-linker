@@ -16,9 +16,9 @@ from application.models import db
 migrate = Migrate()
 talisman = Talisman()
 
-def create_app():
+def create_app(config_object=Configuration):
     app = Flask(__name__)
-    app.config.from_object(Configuration)
+    app.config.from_object(config_object)
 
     # Imported to make sure flask-migrate recognizes the models
     from application import models # pylint: disable=unused-import
