@@ -22,7 +22,7 @@ class Mastermind:
         self.drive = drive
         self.db = db
         self.identifiers = [
-            "auth", "deauth"
+            "auth", "deauth",
             "absen",
             "zoom",
             "ebook", "soal"
