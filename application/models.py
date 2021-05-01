@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 class UserAuth(db.Model):
     __tablename__ = "UserAuth"
-    id = db.Column(db.String(), primary_key=True, default=uuid.uuid4, unique=True)
+    id = db.Column(db.String(), primary_key=True, default = lambda: str(uuid.uuid4()), unique=True)
     user_id = db.Column(db.String())
     u = db.Column(db.String())
     p = db.Column(db.String())
@@ -19,7 +19,7 @@ class UserAuth(db.Model):
 
 class UserRegister(db.Model):
     __tablename__ = "UserRegister"
-    id = db.Column(db.String(), primary_key=True, default=uuid.uuid4, unique=True)
+    id = db.Column(db.String(), primary_key=True, default = lambda: str(uuid.uuid4()), unique=True)
     m = db.Column(db.String())
     user_id = db.Column(db.String())
 
