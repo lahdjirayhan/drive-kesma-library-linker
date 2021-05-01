@@ -141,3 +141,5 @@ cython_debug/
 throwaway.py
 .vscode/
 *.ipynb
+**/client_secrets.json
+**/mycreds.txt
