@@ -5,7 +5,7 @@ import traceback
 from datetime import timedelta
 from selenium.common.exceptions import WebDriverException, NoSuchElementException
 
-from application.utils.course import MATKUL_ABBREVIATIONS
+from application.utils.course import COURSE_ABBREVIATION_HELP_STRING, MATKUL_ABBREVIATIONS
 from application.utils.log_handler import ListHandler
 from application.utils.webdriver import build_driver
 from application.auth.access_db import fetch_credentials
@@ -16,18 +16,29 @@ from application.utils.page_object_models import LoginPage, DashboardPage, Timet
 module_logger = logging.getLogger(__name__)
 module_logger.setLevel(logging.DEBUG)
 
+ATTENDANCE_HELP_STRING = """This keyword is used to register your attendance in Presensi. To use, send this format:
+absen + (course abbreviation) + (6-digit attendance code)
+
+where course abbreviation is one of the known ones, listed as follows:
+
+""" + COURSE_ABBREVIATION_HELP_STRING
+
 def absen_from_line(unparsed_text, user_id):
     start_time = timeit.default_timer()
     message_list = []   
-    try:
-        course_name, attendance_code = preprocess_chat_absen(unparsed_text)
-        username, password = fetch_credentials(user_id)
-    except (WrongSpecificationError, AuthorizationRetrievalError) as error:
-        module_logger.debug(str(error))
-        message_list.append(str(error))
+
+    if unparsed_text:
+        try:
+            course_name, attendance_code = preprocess_chat_absen(unparsed_text)
+            username, password = fetch_credentials(user_id)
+        except (WrongSpecificationError, AuthorizationRetrievalError) as error:
+            module_logger.debug(str(error))
+            message_list.append(str(error))
+        else:
+            reply = run_attendance(username, password, course_name, attendance_code, user_id)
+            message_list.extend(reply)
     else:
-        reply = run_attendance(username, password, course_name, attendance_code, user_id)
-        message_list.extend(reply)
+        message_list.append(ATTENDANCE_HELP_STRING)
     
     module_logger.info("Time elapsed in executing request: {}".format(str(timedelta(seconds = timeit.default_timer() - start_time))))
     return message_list
