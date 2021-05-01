@@ -5,7 +5,7 @@ import traceback
 from datetime import timedelta
 from selenium.common.exceptions import WebDriverException, NoSuchElementException
 
-from application.utils.course import MATKUL_ABBREVIATIONS
+from application.utils.course import COURSE_ABBREVIATION_HELP_STRING, MATKUL_ABBREVIATIONS
 from application.utils.log_handler import ListHandler
 from application.utils.webdriver import build_driver
 from application.auth.access_db import fetch_credentials
@@ -16,18 +16,29 @@ from application.utils.page_object_models import LoginPage, ClassroomDashboardPa
 module_logger = logging.getLogger(__name__)
 module_logger.setLevel(logging.DEBUG)
 
+ZOOM_HELP_STRING = """This keyword is used to find zoom links in Classroom. To use, send this format:
+zoom + (course abbreviation)
+
+where course abbreviation is one of the known ones, listed as follows:
+
+""" + COURSE_ABBREVIATION_HELP_STRING
+
 def find_zoom_link_from_line(unparsed_text, user_id):
     start_time = timeit.default_timer()
     message_list = []
-    try:
-        course_name = preprocess_chat_zoom(unparsed_text)
-        username, password = fetch_credentials(user_id)
-    except (WrongSpecificationError, AuthorizationRetrievalError) as error:
-        module_logger.debug(str(error))
-        message_list.append(str(error))
+    
+    if unparsed_text:
+        try:
+            course_name = preprocess_chat_zoom(unparsed_text)
+            username, password = fetch_credentials(user_id)
+        except (WrongSpecificationError, AuthorizationRetrievalError) as error:
+            module_logger.debug(str(error))
+            message_list.append(str(error))
+        else:
+            reply = run_find_zoom_link(username, password, course_name, user_id)
+            message_list.extend(reply)
     else:
-        reply = run_find_zoom_link(username, password, course_name, user_id)
-        message_list.extend(reply)
+        message_list.append(ZOOM_HELP_STRING)
     
     module_logger.info("Time elapsed in executing request: {}".format(str(timedelta(seconds = timeit.default_timer() - start_time))))
     return message_list
