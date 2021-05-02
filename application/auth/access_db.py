@@ -43,11 +43,17 @@ def access_database_from_line(unparsed_text, db, user_id):
         
     elif keyword == KEYWORD_DEAUTHORIZE:
         # Remove from database
-        UserAuth.query.filter_by(user_id=user_id).delete()
-        db.session.commit()
-        message_list.append(
-            "User details deleted successfully!"
-        )
+        delete_query = UserAuth.query.filter_by(user_id=user_id)
+        if delete_query.count():
+            delete_query.delete()
+            db.session.commit()
+            message_list.append(
+                "User details deleted successfully!"
+            )
+        else:
+            message_list.append(
+                "No user detail recorded, operation failed."
+            )
     else:
         message_list.append(
             "Error: command unknown."
