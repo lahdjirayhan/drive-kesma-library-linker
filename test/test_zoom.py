@@ -54,6 +54,28 @@ def test_invalid_course_name(app):
     elem = "\n\n\n".join(reply)
     assert "not recognized" in elem
 
-def test_valid_course_name(app):
-    # NOTE(Rayhan) Seriously do I need to run selenium here?
-    assert True
+def test_valid_course_name(app, mocker):
+    """
+    GIVEN user is registered
+    WHEN user asks to find zoom for a valid course name
+    THEN app should go run selenium
+    """
+    # mock the zoom-finding API
+    mocked_run_find_zoom_link = mocker.patch(
+        'application.zoom.zoom.run_find_zoom_link',
+        return_value=["SUCCESS, THIS IS MOCK REPLY"]
+    )
+
+    # GIVEN
+    USER_ID = REGISTERED_USER_ID
+
+    # WHEN
+    reply = app.config['MASTERMIND'].query_reply("zoom statof", USER_ID, GROUP_ID)
+    
+    # THEN
+    assert reply_list_is_valid(reply)
+
+    elem = "\n\n\n".join(reply)
+    assert "SUCCESS" in elem
+
+    mocked_run_find_zoom_link.assert_called_once()
