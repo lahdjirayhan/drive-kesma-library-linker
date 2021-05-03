@@ -1,23 +1,26 @@
 from decouple import config
-import pathlib
+from dateutil import parser
+import json
+from oauth2client.client import OAuth2Credentials
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
 from application.drive_linker.drive_linker import browse_library_from_line
 
-CLIENT_SECRETS_FILE_PATH = pathlib.Path(__file__).resolve().parent.joinpath("client_secrets.json")
-MYCREDS_FILE_PATH = pathlib.Path(__file__).resolve().parent.joinpath("mycreds.txt")
+# Setup client config
+client_secrets_json_contents = json.loads(config('CLIENT_SECRET_JSON_CONTENTS'))
+client_config = client_secrets_json_contents['web']
+client_config['redirect_uri'] = client_config.pop('redirect_uris')[0]
+client_config['revoke_uri'] = None
 
-with open(CLIENT_SECRETS_FILE_PATH, 'w') as f:
-    f.write(config('CLIENT_SECRET_JSON_CONTENTS'))
+# Setup credentials
+mycreds_txt_contents = json.loads(config('MYCREDS_TXT_CONTENTS'))
+mycreds = {k: v for k, v in mycreds_txt_contents.items() if k not in ['invalid', '_class', '_module']}
+mycreds['token_expiry'] = parser.parse(mycreds['token_expiry'], ignoretz=True)
+credentials = OAuth2Credentials(**mycreds)
 
-with open(MYCREDS_FILE_PATH, 'w') as f:
-    f.write(config('MYCREDS_TXT_CONTENTS'))
-
-GoogleAuth.DEFAULT_SETTINGS['client_config_file'] = CLIENT_SECRETS_FILE_PATH
+GoogleAuth.DEFAULT_SETTINGS['client_config_backend'] = 'settings'
 gauth = GoogleAuth()
-gauth.LoadCredentialsFile(MYCREDS_FILE_PATH)
+gauth.client_config = client_config
+gauth.credentials = credentials
 drive = GoogleDrive(gauth)
-
-# pathlib.Path(CLIENT_SECRETS_FILE_PATH).unlink(missing_ok=True)
-# pathlib.Path(MYCREDS_FILE_PATH).unlink(missing_ok=True)
