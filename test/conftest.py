@@ -1,11 +1,11 @@
-from application.models import UserAuth, UserRegister
+from application.auth.access_db import add_userauth
+from application.models import db
+
 import os
 import tempfile
 import pathlib
 
 import pytest
-
-from application import create_app, db
 
 # HELPER CONSTANTS, FOR USE IN TESTS
 REGISTERED_USER_ID   = "U03Feb22Jul"
@@ -21,46 +21,39 @@ class TestConfiguration:
         self.SQLALCHEMY_DATABASE_URI = uri
 
 @pytest.fixture
-def app():
+def db_uri():
+    """This fixture yields the temporary database URI"""
+    db_handle, db_path = tempfile.mkstemp(suffix=".db")
+    db_uri = "sqlite:///" + db_path
+    yield db_uri
+    os.close(db_handle)
+    os.unlink(db_path)
+
+@pytest.fixture
+def app_instance(db_uri):
+    """This fixture yields app instance without app context"""
+    from application import create_app
+
+    test_config_object = TestConfiguration(db_uri)
+    app_instance = create_app(config_object=test_config_object)
+    yield app_instance
+
+@pytest.fixture
+def app(app_instance):
     """This fixture yields an app instance
     
     not a client instance, because I would want to just test directly against
     mastermind query_reply, bypassing the webhook handling entirely.
     """
-    # Making test database handle
-    db_handle, db_path = tempfile.mkstemp(suffix=".db")
-    db_uri = "sqlite:///" + db_path
-
-    # Making testconfiguration object
-    test_config_object = TestConfiguration(db_uri)
-    
-    # Making app instance
-    app_instance = create_app(config_object=test_config_object)
-
     # Making tables, preparing database
     with app_instance.app_context():
         db.create_all()
-        db.session.add(UserAuth(REGISTERED_USER_ID, "jumbled_username", "jumbled_password"))
-        db.session.commit()
+        add_userauth(db, REGISTERED_USER_ID, 'jumbled_username', 'jumbled_password')
 
-    try:
-        # Yield app instance
-        with app_instance.app_context():
-            with app_instance.test_request_context(base_url="https://goddard-space-center.herokuapp.com", path="/callback"):
-                yield app_instance
-    finally:
-        # Closing database handle, deleting all temporary files
-        # Note to self: this finally block sometimes is not run. As to why, I don't / can't know for sure.
-        # Generator function not destroyed is probably the cause.
-        cleanup_drivelinker_path()
-        os.close(db_handle)
-        os.unlink(db_path)
-
-def cleanup_drivelinker_path():
-    """Helper function to wipe out drivelinker credentials after use"""
-    drive_linker_path = pathlib.Path(__file__).parent.parent.joinpath("application/drive_linker")
-    drive_linker_path.joinpath("mycreds.txt").unlink(missing_ok=True)
-    drive_linker_path.joinpath("client_secrets.json").unlink(missing_ok=True)
+    # Yield app instance with app and test request contexts (READY TO USE)
+    with app_instance.app_context():
+        with app_instance.test_request_context(base_url="https://goddard-space-center.herokuapp.com", path="/callback"):
+            yield app_instance
 
 def reply_list_is_valid(reply) -> bool:
     """Helper: asserts conditions for a valid reply list, and returns True if all asserts pass
