@@ -3,7 +3,7 @@ alembic==1.4.3
 SQLAlchemy==1.3.19
 PyDrive==1.3.1
 Flask==1.1.2
-numpy==1.19.1
+# numpy==1.19.1 | commented out because numpy is not used anymore
 humanize==3.1.0
 cryptography==3.1.1
 line_bot_sdk==1.16.0
