@@ -45,7 +45,7 @@ def make_course_abbreviation_help(common_abbrevs: dict) -> str:
         result_per_line.append(course_name.upper())
         for a in abbreviations:
             result_per_line.append("  " + a)
-        result_per_line.append('\n')
+        result_per_line.append('')
     
     return '\n'.join(result_per_line).strip()
 
