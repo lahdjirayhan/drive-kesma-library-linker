@@ -4,6 +4,31 @@ from application.auth import access_database_from_line
 from application.zoom import find_zoom_link_from_line
 from application.drive_linker import browse_library_from_line
 
+source_code_link = "https://github.com/lahdjirayhan/drive-kesma-library-linker"
+
+MASTERMIND_GENERAL_HELP_STRING = f"""Hello! Here are what this bot can do:
+
+1. RECORD YOUR ATTENDANCE
+Using the keyword "absen", you can make this bot record your attendance in Presensi.
+
+2. FIND YOUR CLASS ZOOM LINK
+Using keyword "zoom", you can make this bot find your class' zoom link in Classroom.
+
+3. PROVIDE LINKS TO PAST EXAMS AND E-BOOKS IN HIMASTA-ITS KESMA LIBRARY
+Using keyword "ebook" and "soal", you will get direct download links of past exams and ebooks that are contained within HIMASTA-ITS Kesma Library.
+
+NOTE: "absen" and "zoom" require your credentials.
+
+4. REMEMBER YOUR CREDENTIALS
+Using keyword "auth", you can tell this bot about your credentials. Using keyword "deauth", you can make this bot forgets your credentials.
+Credentials are used to log in to Presensi and Classroom.
+
+Further information may be found in this bot's source code:
+{source_code_link}
+
+Enjoy this bot's functionalities!
+"""
+
 class Mastermind:
     """
     Temporary docstring:
@@ -25,7 +50,8 @@ class Mastermind:
             "auth", "deauth",
             "absen",
             "zoom",
-            "ebook", "soal"
+            "ebook", "soal",
+            "help"
         ]
     
     def query_reply(self, received_text: str, user_id: str, group_id: str) -> List:
@@ -40,6 +66,8 @@ class Mastermind:
             if rest_of_the_chat == '':
                 return browse_library_from_line(self.drive, key, None, user_id)
             return browse_library_from_line(self.drive, key, rest_of_the_chat, user_id)
+        if key == "help":
+            return [MASTERMIND_GENERAL_HELP_STRING]
 
         return []
     
