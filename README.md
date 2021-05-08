@@ -17,35 +17,37 @@ The bot has three capabilities at the time, doable via simple LINE chat:
 
 Because some of those capabilities i.e `(attendance-recorder)` and `(zoom-link-finder)` requires valid credential to go past campus web login portal, the bot also has one additional capability:
 
-- `(auth)` Remember your login credentials and associate it with your LINE account.
+- `(authorize)` Remember your login credentials and associate it with your LINE account.
 
 # Keywords
 
 The bot will only respond to certain key identifiers (characters/words). It will ignore all chats, except:
 
-## `*auth`
+## `auth`
 
-Usage: `*auth`
+Usage: `auth`
 
-What it does: Sends you a link that displays a page titled "Sign In". The said page is just a way for the bot to ask for your credentials [1]. It does not check whether the given credentials are correct. It merely remembers the given credentials and associates them with your LINE account (i.e. the LINE account that asked for `*auth` beforehand).
+What it does: Sends you a link that displays a page titled "Sign In". The said page is just a way for the bot to ask for your credentials [1]. It does not check whether the given credentials are correct. It merely remembers the given credentials and associates them with your LINE account (i.e. the LINE account that asked for `auth` beforehand).
 
 If you always get a login failed chat on using bot's capability that requires valid credentials i.e. `(attendance-recorder)`, it may be an indication that the bot remembers an invalid or wrong credential detail.
 
 The bot needs your valid credentials to go through campus web portal's sign-in page. The credentials provided are used when necessary, i.e. by `(attendance-recorder)`. I acknowledge that storing credentials in a database is a security weakness. However, I'd like to note that while they're stored in a cloud database, they're encrypted.
 
-Note: each login link is for one-time use only. If you need another login link (i.e. to make correction for your previously wrong password, or to update the bot when you change your password in campus website), you can use `*auth` again to request another login link. The credentials entered in the next login link will overwrite any credentials previously associated with your LINE account.
+Note: each login link is for one-time use only. If you need another login link (i.e. to make correction for your previously wrong password, or to update the bot when you change your password in campus website), you can use `auth` again to request another login link. The credentials entered in the next login link will overwrite any credentials previously associated with your LINE account.
 
-## `*deauth`
+## `deauth`
 
-Usage: `*deauth`
+Usage: `deauth`
 
 What it does: Removes/forgets the authorization detail previously associated with your LINE account.
 
-## `!` (Identifier to trigger `attendance-recorder`)
+## `absen` (Identifier to trigger `attendance-recorder`)
 
-Usage: `!COURSE_NAME ATTENDANCE_CODE` without whitespace between `!` and `COURSE_NAME`. Example: `!ekon 123123` or `!ansur 999999`
+Usage:
+- to display all available course codes: `absen`
+- to record your attendance on a certain course using certain attendance code: `absen COURSE_NAME ATTENDANCE_CODE`. Example: `absen ekon 123123` or `absen ansur 999999`
 
-What it does: Tells the bot to go recording attendance on course `COURSE_NAME` with code `ATTENDANCE_CODE`.
+What it does: Tells the bot to go logging in to online course portal and recording attendance on course `COURSE_NAME` with code `ATTENDANCE_CODE`.
 
 `COURSE_NAME` can be a full course name e.g. `statistika non parametrik`, or an abbreviation e.g. `statnonpar`. The bot does not support every possible course name or abbreviation. It has a pre-specified dictionary about these names and abbreviations.
 
@@ -54,11 +56,13 @@ If you're interested in adding support for other courses or adding new abbreviat
 Specifics on the steps the bot takes to record attendance is specified here [3].
 
 
-## `^` (Identifier to trigger `zoom-link-finder`)
+## `zoom` (Identifier to trigger `zoom-link-finder`)
 
-Usage: `^COURSE_NAME`
+Usage:
+- to display all available course codes: `zoom`
+- to find zoom link of a course: `zoom COURSE_NAME`. Example: `zoom statcons`
 
-What it does: Tells the bot to go login to online course portal and find the available zoom link for course `COURSE_NAME`.
+What it does: Tells the bot to go logging in to online course portal and finding the available zoom link for course `COURSE_NAME`.
 
 `COURSE_NAME` can be a full course name e.g. `analisis multivariat`, or an abbreviation e.g. `multivar`. The bot does not support every possible course name or abbreviation. It has a pre-specified dictionary about these names and abbreviations.
 
@@ -94,7 +98,7 @@ Why don't I support pre-specified course codes instead for `(drive-linker)` i.e.
 
 - [0] I make this bot because I'm bored and I'm learning Python. Why this bot? Because I find recording attendance is very repetitive but resourse-intensive, i.e. opening a browser while in the middle of Zoom class. Imagine the CPU and network usage on that occasion (makes my computer super *slow* not to mention *lagging* or even *crashing* either browser or Zoom), and at the same time my attention is getting divided into two different things at once. Over time I add more useful things that I can think of.
 
-- [1] Using this "Sign In" login page is the more secure way of telling the bot about your credentials compared to easiest/most obvious methods, for example sending `*auth USERNAME PASSWORD` over LINE chat. That is because chats to official accounts (and therefore this bot also) **can't be unsent**. It can be deleted, but it has to be **deleted individually** on every device you are logged into (e.g. deleting it on your phone does not automatically deletes the chat history on your PC if you're logged in there, vice versa). It is a hassle and prone to be seen by people looking over your shoulder since the password (just like any other chats) will be displayed permanently in chat in cleartext (`PASSWORD` not `********`).
+- [1] Using this "Sign In" login page is the more secure way of telling the bot about your credentials compared to easiest/most obvious methods, for example sending `auth USERNAME PASSWORD` over LINE chat. That is because chats to official accounts (and therefore this bot also) **can't be unsent**. It can be deleted, but it has to be **deleted individually** on every device you are logged into (e.g. deleting it on your phone does not automatically deletes the chat history on your PC if you're logged in there, vice versa). It is a hassle and prone to be seen by people looking over your shoulder since the password (just like any other chats) will be displayed permanently in chat in cleartext (`PASSWORD` not `********`).
 
 - [2] The file that contains the definition pre-specified dictionary for `(attendance-recorder)` and `(zoom-finder)` is in **`application/utils/course.py`**. See it for yourself for what courses are available and what abbreviations are supported.
 
